@@ -1,0 +1,10 @@
+Given log files produced by TC 7b644a09d12637a4ed7977b8cc0fafb4b319eaef,
+
+call ./one_file.py <filename.log>
+to produce a simple table with numbers.
+
+put files P100.txt and V100.txt next to the scripts and call
+./plots.py
+to produce plots
+./print_tables.py
+to produce latex tables.

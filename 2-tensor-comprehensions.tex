@@ -1,0 +1,226 @@
+\section{Tensor Comprehensions}
+\label{sec:tc}
+
+Tensor Comprehensions (TC) are an algorithmic notation for computing
+on multi-dimensional arrays. It borrows from the Einstein notation,
+a.k.a.\ summation convention: (1) index variables are defined
+implicitly and their range is inferred
+from what they index; (2) indices that only appear on the right hand side of a
+statement are assumed to be reduction dimensions;
+(3) the evaluation order of points in the iteration space does not
+affect the output.
+
+A \emph{tensor comprehension function}, or tensor comprehension for
+short, defines output tensors from \emph{pointwise} and
+\emph{reduction} operations over input tensors. These operations are
+defined declaratively as a sequence of pointwise equations or
+reductions, called \emph{tensor comprehensions statements}, or
+statements for short.
+
+Let us consider matrix-vector product as a simple example of a tensor
+comprehension with two statements:
+\begin{tclisting}
+def mv(float(M,K) A, float(K) x) -> (C) {
+  C(i)  = 0
+  C(i) += A(i,k) * x(k)
+}
+\end{tclisting}
+This defines the function \ic{mv} with \ic{A} and \ic{x} as input tensors and
+\ic{C} as an output.
+The shapes of \ic{A} and \ic{X} are of size $(M,K)$ and $(K)$, respectively.
+The shape of \ic{C} is inferred automatically.
+The statements introduce two indices `\ic{i}' and
+`\ic{k}'. Variables not defined in the function signature implicitly become
+indices. Their range is inferred based on how they are used in indexing (see
+Section~\ref{sec:range_inference}); here we will discover $\texttt{i} \in
+[0,M)$, and $\texttt{k} \in [0,K)$.
+Because \ic{k} only appears on the right-hand side, stores into \ic{C} will
+\emph{reduce} over \ic{k} with the reduction operator \ic{+}.
+
+Intuitively, a tensor comprehension may be thought of as
+the \emph{body} of a loop
+whose control flow is inferred from context. The equivalent C-style
+pseudo-code is:
+\begin{clisting}
+tensor C({M}).zero(); // 0-filled single-dim tensor
+parallel for (int i = 0; i < M; i++)
+  reduction for (int k = 0; k < K; k++)
+    C(i) += A(i,k) * x(k);
+\end{clisting}
+
+Importantly, the nesting order (\ic{i} then \ic{k}) is arbitrary: the
+semantics of a tensor comprehension is always invariant to loop permutation.%
+\footnote{Nested reductions over multiple variables are supported as long
+  as they involve a single reduction operator,
+  as commutation does not hold across reduction operators, e.g.,
+  $\min(\max(f(.))) \neq \max(\min(f(.)))$.}
+TC allows in-place updates while preserving a functional semantics
+that is atomic on full tensors: \emph{RHS expressions are read in full before
+  assigning any element on the LHS}.
+This specification is important in case the LHS tensor also occurs in
+the RHS~\cite{FRAGUELA2012465}: the compiler is responsible for checking the
+causality of in-place updates on element-wise dependences, currently allowing
+only pointwise updates. Also, to enable in-place updates across TC functions,
+outputs of a TC statement can also be used as inputs.
+
+We provide a short-cut for an \emph{initializing reduction}, where the result is
+initialized to the operator's neutral element before reduction by appending
+`\ic{!}' to the operator, e.g., `\ic{+=!}' instead of `\ic{+=}'.  A one-line
+definition of the matrix-vector product \textbf{mv} is given below; and
+common ML kernels can be written in just a few lines,
+such as the \textbf{sgemm} function from BLAS:\label{page:sgemm}
+\begin{tclisting}
+def mv(float(M,K) A, float(K) x) -> (C)
+  { C(i) +=! A(i,k) * x(k) }
+
+def sgemm(float a, float b, float(N,M) A, float(M,K) B) -> (C) {
+  C(i,j)  = b * C(i,j)            # initialization
+  C(i,j) += a * A(i,k) * B(k,j)   # accumulation
+}
+\end{tclisting}
+
+Expressing general tensor contractions is equally easy.  A fully
+connected layer followed by a rectified linear unit takes the form of
+a transposed matrix multiplication initialized to a broadcast bias
+term followed by pointwise clamping (applying the builtin
+scalar function \ic{fmaxf} with $0$):
+\begin{tclisting}
+def fcrelu(float(B,I) in, float(O,I) weight, float(O) bias) -> (out) {
+  out(b,o)  = bias(o) where b in 0:B
+  out(b,o) += in(b,i) * weight(o,i)
+  out(b,o)  = fmaxf(out(b,o), 0)
+}
+\end{tclisting}
+The \ic{where} annotation informs the inference algorithm of the intended index
+variable ranges when they cannot be unambiguously inferred.  In this case,
+`\ic{b}' indexes only `\ic{out}` whose size \emph{also} needs to be inferred.
+Unlike tensor kernel libraries with predefined layout
+conventions, notice that TC lets the user control data layout through the order of
+tensor indexing dimensions. Here we chose to reuse the \ic{out} tensor
+across all comprehensions, indicating the absence of temporary
+storage.
+
+Similarly, the \ic{where} clause serves to indicate ranges of \ic{kh}
+and \ic{kw} in the max pooling layer, which would otherwise be
+under-constrained:
+\begin{tclisting}
+def maxpool2x2(float(B,C,H,W) in) -> (out)
+  { out(b,c,i,j) max=! in(b,c, 2 * i + kh, 2 * j + kw) where kh in 0:2, kw in 0:2 }
+\end{tclisting}
+A 2-D convolution is also simple. Its reduction is initialized to $0$
+(note the use of \ic{+=!}) with reduction dimensions \ic{kh}, \ic{kw}:
+\label{page:conv2d}
+\begin{tclisting}
+def conv2d(float(B,IP,H,W) in, float(OP,IP,KH,KW) weight) -> (out)
+  { out(b,op,h,w) +=! in(b,ip, h + kh, w + kw) * weight(op,ip,kh,kw) }
+\end{tclisting}
+
+Subscript expressions can be any affine function of iterators, or
+subscript-of-subscript expressions (a tensor element indexing another),
+and combinations thereof. The latter
+capture data-dependent accesses such as a gather operation:
+\begin{tclisting}
+def gather(float(N) X, int(A,B) I) -> (Z) { Z(i,j) = X(I(i,j)) }
+\end{tclisting}
+
+TC algorithmic notation differs from today's prominent frameworks
+where most operators are defined as black-box functions. The design of
+TC makes it easy to experiment with small layer variations while
+preserving a concise, in-place expression. Thus, a strided convolution
+is easily created as a tweak on convolution, e.g., strided by \ic{2}
+along \ic{h} and \ic{3} along \ic{w} is:
+\begin{tclisting}
+def sconv2d(float(N,C,H,W) I, float(F,C,KH,KW) W, float(F) B) -> (O) {
+  O(n,f,h,w) +=! I(n,c, 2 * h + kh, 3 * w + kw) * W(f,c,kh,kw)
+  O(n,f,h,w) +=  B(f)
+}
+\end{tclisting}
+
+\figref{tc-grammar} shows the grammar of the Tensor Comprehension language in EBNF notation.
+
+\begin{figure}[h!tb]
+\begin{minipage}{.49\textwidth}
+\begin{tclisting_small}
+num ::= <decimal number literal>
+id ::= <C identifier>
+binop ::= '+' | '-' | '*' | '/' | '==' | '!=' | ...
+exp ::= num
+  | ( '-' | '!' ) exp
+  | exp binop exp
+  | exp '?' exp ':' exp
+  | id '.' num    # range of num-th dimension of id
+  | id '(' exp_list ')'     # call or tensor access
+
+reduction ::= '+='  | '*='  | 'min='  | 'max='
+            | '+=!' | '*=!' | 'min=!' | 'max=!'
+
+range_constraint ::= id '=' exp '..' exp
+                   | id '=' exp
+
+stmt ::= id '(' id_list ')' ( '=' | reduction )
+         [ 'where' range_constraint_list ]
+  | id_list = id '('id_list ')' # TC function call
+\end{tclisting_small}
+  % | 'for' indent '{' # imperative dimension
+  %      stmt_list
+  %   '}'
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+\begin{tclisting_small}
+arg ::= type id
+return ::= id # inferred return type and range
+
+scalar_type ::= 'double' | 'float' | 'half'
+              | 'int' | 'byte' | 'uint32' | ...
+type ::= scalar_type [ '(' id_list ')' ]
+
+func ::= # TC function definition
+  'def' id '(' arg_list ')' '->' '(' return_list ')' '{'
+    stmt_list
+  '}'
+
+id_list ::= <comma separated id list>
+exp_list ::= <comma separated exp list>
+arg_list ::= <comma separated arg list>
+stmt_list ::= <whitespace separated stmt list>
+return_list ::= <comma separated return list>
+range_constraint_list ::= <non-empty comma separated
+                           range_constraint list>
+\end{tclisting_small}
+\end{minipage}
+% missing complex numbers, and builtins to decompose and build them
+\vskip-1em
+\caption{\label{fig:tc-grammar}Simplified EBNF syntax for core TC. Parentheses
+denote inline alternatives, brackets denote optional clauses, angle
+brackets contain textual descriptions used for simplicity.}
+\end{figure}
+
+\subsection{Data Layout}
+TC makes data layout explicit and easy to reason about.
+It supports generalized tensor transpositions (i.e., applying an $n$-D
+permutation matrix where $n>2$), and data tiling can be achieved by
+reshaping tensors and adjusting the index expressions.
+Range inference and checking guarantees such reshaping will always be
+consistent throughout the statements of a tensor comprehension.
+For instance, $NCHW$ convolution operates on an
+explicit input, declared as \ic{float I(N,C,H,W)}, with the layout matching the
+expected row-major semantics.
+
+In addition, the TC compiler may transparently apply layout
+transformations, e.g., when mapping tensor tiles to GPU shared memory.
+
+\subsection{Automatic Differentiation}
+TC does not natively deal with automatic differentiation, but we aim
+to add TC support to an existing differentiation tool in the
+future. DSLs like PlaidML \cite{PlaidML} already
+demonstrated this.
+
+On the other hand, backward passes can readily be implemented in TC as
+a few lines of code. Here is the backward pass of matrix
+multiplication:
+\begin{tclisting}
+def matmul_grad(float(M,N) A, float(N,K) B, float(M,K) d_O) -> (d_A,d_B) {
+  d_A(m,n) +=! d_O(m,r_k) * B(n,r_k)
+  d_B(n,k) +=! d_O(r_m,k) * A(r_m,n)
+}
+\end{tclisting}

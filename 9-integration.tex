@@ -1,0 +1,78 @@
+\section{Integration with ML Frameworks}
+TC is designed to optimize individual layers or small subgraphs of an ML model.
+Considering the entire model is not only computationally expensive, but often
+leads to most transformations being hindered by a large number of data
+dependences. Furthermore, ML frameworks perform work distribution and placement
+at the model level, treating a layer as a unit of work; extremely large layers
+could interfere with the framework operation.
+
+Unlike XLA or Glow, TC supports completely custom layers.  In TC,
+\emph{layer fusion} is merely pasting the code that constitutes the
+layers into a single function, or inlining TC functions at the AST
+level. Unlike Halide and TVM, the polyhedral backbone of TC includes
+instance-wise dependence analysis, capturing dependences and tensor
+access relations at the level of individual loop iterations and tensor
+elements. This allows TC to fuse operations without introducing
+redundant computation, and to combine fusion with enabling
+transformations such as shifting (for convolutions) or
+scaling (for pooling layers). TC's polyhedral representation also
+enables it to automatically infer sizes, and to discover parallelism and
+locality-parallelism trade-offs beyond a predefined collection of
+map/reduce/scan combinators.
+
+Let us now describe the transparent integration into a ML framework,
+from a user perspective.  Until now, such levels of integration had
+only been demonstrated on operator graph compilers such as XLA \cite{XLA}
+and Glow \cite{Glow}, starting from a lower level of abstraction than TC,
+and missing the genericity and high reusability of a polyhedral
+framework as well as feedback-directed autotuning.
+
+We opted for an ``in process'' implementation, streamlining the interaction
+with computation graph engines and ML applications built on top of them, a
+unique feature for a fully-automated scheduling and mapping flow.
+TC is integrated into any ML framework as follows.  We provide a thin API that
+translates the specific tensor object model to our own, see
+\figref{integration}. Operator definitions are overridden to generate TC rather
+than the framework's backend implementation, as well as provide users the
+ability to write their own TC.  A single TC may correspond to a DAG of
+operators in the ML framework.
+The tensor comprehensions are then JIT-compiled as shown in \figref{flow}.
+DAG partitioning, matching and rewriting (like, e.g.,
+TensorRT~\cite{TensorRT}) is currently not part of the flow, although
+this would make an interesting future combination,
+with feedback from the compiler.
+
+\begin{figure}[h!tb]
+\vskip-1em
+\begin{minipage}{.56\textwidth}
+\begin{cpplisting}
+string tc = R"TC(some_tc_for_conv)TC";
+auto I = makeATenTensor<CudaBackend>({N, C, H, W});
+auto W = makeATenTensor<CudaBackend>({F, C, KH, KW});
+ATenAutotuner<CudaBackend> tuner(tc);
+auto best = tuner.tune("conv", {I, W});
+auto pExecutor =
+    compile<CudaBackend>(tc, "conv", {I, W}, best[0]);
+auto out = prepareOutputs(tc, "conv", {I, W});
+auto times = profile(*pExecutor, {I, W}, outs);
+\end{cpplisting}
+\end{minipage}
+\begin{minipage}{.42\textwidth}
+\begin{pylisting}
+import torch
+import tensor_comprehensions as tc
+tcdef = """...some_tc_for_conv..."""
+T_I = torch.randn(N, C, H, W).cuda()
+T_W = torch.randn(F, C, KH, KW).cuda()
+# register the TC string
+conv = tc.define(tcdef, name="conv")
+# autotune the kernel
+best = conv.autotune(T_I, T_W)
+# run with best option and cache the binary
+T_O = conv(T_I, T_W, options=best)
+\end{pylisting}
+\end{minipage}
+\vskip-1em
+\caption{Example of embedded usage in C++/ATen (top) and PyTorch (bottom)}
+\label{fig:integration}
+\end{figure}

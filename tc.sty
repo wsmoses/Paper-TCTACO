@@ -1,0 +1,193 @@
+% -*- latex -*-
+
+\RequirePackage{comment}
+%\RequirePackage[x11names]{xcolor}
+\RequirePackage{listings}
+
+\definecolor{lightbackground}{rgb}{.98,.98,.97}
+\definecolor{darkgray}{rgb}{.3,.3,.3}
+\definecolor{darkred}{rgb}{.6,0,0}
+\definecolor{darkgreen}{rgb}{0,.6,0}
+\definecolor{darkblue}{rgb}{0,0,.6}
+
+\definecolor{string}{rgb}{.6,.2,.2}
+\definecolor{keyword}{rgb}{.6,0,0}
+\definecolor{comment}{rgb}{.3,.4,.3}
+
+% \lstdefinelanguage{tc}{
+% 	morekeywords={for, int, float, def, template, in},
+%   	otherkeywords={% Operators
+%     	+, *, -, /, =, +=, ^^, ->, \$, ..
+%   	},
+% 	sensitive=true,
+% 	morecomment=[l]{\#},
+%    	keywordstyle=\color{keyword},
+%    	commentstyle=\color{comment},
+% }
+
+\lstdefinelanguage{tc}{%
+  %% List of keywords
+  alsoletter={->!.=\&|+*0123456789},
+  keywords=[1]{def,for,->},
+  keywords=[2]{void,char,byte,short,long,int,float,double,boolean,size_t},
+  keywords=[3]{:,where,%
+    sigma,sigmoid,tanh,%
+    max,min,fmax,fmaxf,fmin,fminf,%
+    =,\&=,\&\&=,|=,||=,+=,*=,min=,max=,%
+    min=!,max=!,\&=!,\&\&=!,|=!,||=!,+=!,*=!,::=},
+  keywords=[4]{concat,mv,sgemm,fcrelu,conv2d,sconv2d,maxpool2x2,gather,%
+    conv1d,rnn,mirror2,foo,bar,mm,tmm,tbmm,gconv,dconv,matmul_grad,%
+    group_convolution,group_normalization,moments2_2d_1D,kronecker3,%
+    group_normalization_single_kernel,wavenet1,%
+    KRU,KRU_1,KRU_2,KRU_3,MLP1,MLP2,MLP3,1LUT,2LUT,prodModel,outerProductMM},
+  % otherkeywords={->,?,:,..,=,\&=,\&\&=,|=,||=,+=,*=},
+  % otherkeywords={=!,\&=!,\&\&=!,|=!,||=!,+=!,*=!},
+  % emph={main,producer,consumer,master,selector,compute,hscan,sync_av},
+  %% List of abbreviations
+  literate={==}{{$=$}}1 {<=}{{$\leq$}}1 {>=}{{$\geq$}}1 {!=}{{$\neq$}}1%
+    {->}{{{\color{keyword}$\mathbf{\to}$}}}1,
+  % literate={<=}{{$\leq$}}1 {>=}{{$\geq$}}1 {!=}{{$\neq$}}1 {*}{{$\times$}}1,
+  % literate={[OPT[}{{\OPTL}}1 {]OPT]}{{\OPTR}}1,
+  %{\#}{{\textbf{\color{darkgreen}\#}}}1,
+  %% List of strings
+  string=[b]",
+  morestring=[b]',
+  %% List of comment strings
+  comment=[l]\#,
+  morecomment=[s]{/*}{*/},
+  %% Special character for LaTeX
+  mathescape=true,
+  %% Miscellaneous
+  flexiblecolumns=true,
+  tabsize=2,
+  %% Line numbering
+  %firstnumber=1,
+  %stepnumber=1,
+  %numbers=left,
+  numbers=none,
+  % numbersep=-6mm,
+  %% titre
+  captionpos=b,
+  % abovecaptionskip=3mm,
+  % belowcaptionskip=3mm,
+  %% Bounding box
+  frame=single,
+  framerule=0pt,
+  aboveskip=3pt,
+  belowskip=0pt,
+  framesep=1pt,
+  %% Styles
+  basicstyle=\fontsize{8pt}{8.25pt}\selectfont\ttfamily,
+  keywordstyle={\color{keyword}\bfseries},
+  keywordstyle={[1]\color{keyword}\bfseries},
+  keywordstyle={[2]\color{darkblue}},
+  keywordstyle={[3]\color{darkgreen}},
+  keywordstyle={[4]\color{darkred}},
+  emphstyle=\slshape,
+  identifierstyle=\color{black},
+  commentstyle=\color{comment},
+  stringstyle=\color{string}
+}
+
+\lstnewenvironment{tclisting}
+{\lstset{language=tc,
+    % keywordstyle=\fontseries{bx}\fontfamily{cmss}\fontshape{n}\selectfont,
+    % numberstyle=\footnotesize,
+    % basicstyle=,
+    % numberstyle=,
+    basicstyle=\fontsize{8pt}{8.25pt}\selectfont\ttfamily,
+    basewidth=0.5em,
+    numbers=none,
+    % numberstyle=\tiny,
+    stepnumber=1,
+    columns=fixed,
+    xleftmargin=1ex,%0.25in,
+    firstnumber=1,
+    showstringspaces=false,
+    mathescape=true,
+    % breaklines
+  }}
+{}
+
+\lstnewenvironment{tclisting_small}
+{\lstset{language=tc,
+    % keywordstyle=\fontseries{bx}\fontfamily{cmss}\fontshape{n}\selectfont,
+    % numberstyle=\footnotesize,
+    % basicstyle=,
+    % numberstyle=,
+    basicstyle=\fontsize{7pt}{7.25pt}\selectfont\ttfamily,
+    basewidth=0.5em,
+    numbers=none,
+    % numberstyle=\tiny,
+    stepnumber=1,
+    columns=fixed,
+    % xleftmargin=1ex,%0.25in,
+    firstnumber=1,
+    showstringspaces=false,
+    mathescape=true,
+    % breaklines
+  }}
+{}
+
+\lstnewenvironment{clisting}
+{\lstset{language=c,
+    keywords=[2]{tensor},
+    keywords=[3]{parallel,reduction},
+    % keywordstyle=\fontseries{bx}\fontfamily{cmss}\fontshape{n}\selectfont,
+    % numberstyle=\footnotesize,
+    % basicstyle=,
+    % numberstyle=,
+    basicstyle=\fontsize{7pt}{7.25pt}\selectfont\ttfamily,
+    basewidth=0.5em,
+    frame=single,
+    framerule=0pt,
+    aboveskip=3pt,
+    belowskip=0pt,
+    framesep=1pt,
+    numbers=none,
+    % numberstyle=\tiny,
+    stepnumber=1,
+    columns=fixed,
+    % xleftmargin=1ex,%0.25in,
+    firstnumber=1,
+    showstringspaces=false,
+    mathescape=true,
+    % breaklines
+  }}
+{}
+
+\lstnewenvironment{pylisting}
+{\lstset{language=python,
+    % keywordstyle=\fontseries{bx}\fontfamily{cmss}\fontshape{n}\selectfont,
+    % numberstyle=\footnotesize,
+    % basicstyle=,
+    % numberstyle=,
+    basicstyle=\fontsize{7pt}{7.25pt}\selectfont\ttfamily,
+    basewidth=0.5em,
+    frame=single,
+    framerule=0pt,
+    aboveskip=3pt,
+    belowskip=0pt,
+    framesep=1pt,
+    numbers=none,
+    % numberstyle=\tiny,
+    stepnumber=1,
+    columns=fixed,
+    % xleftmargin=1ex,%0.25in,
+    firstnumber=1,
+    showstringspaces=false,
+    mathescape=true,
+    % breaklines
+  }}
+{}
+
+\lstnewenvironment{cpplisting}
+{\lstset{language=C++,
+   basicstyle=\fontsize{7pt}{7.25pt}\selectfont\ttfamily,
+   basewidth=0.5em,
+   keywordstyle=\color{blue}\ttfamily,
+   stringstyle=\color{red}\ttfamily,
+   commentstyle=\color{comment}\ttfamily,
+   morecomment=[l][\color{magenta}]{\#}
+}}
+{}

@@ -1,0 +1,94 @@
+\section{Introduction}
+
+Deep neural networks trained with back-propagation
+learning~\cite{Backprop89} are a method of choice to solve complex
+problems with sufficient data. Popular graph computation
+engines~\cite{Theano,Torch7,MXNet,TensorFlow,PyTorch} offer high-level
+abstractions for optimizing and executing deep neural networks
+expressed as graphs of tensor operations. These frameworks make
+transparent use of heterogeneous computing systems, leveraging
+highly-optimized routines for individual operators.  While these
+operators are sufficient for many applications, they fall short in a
+number of instances.  Developing a novel type of layer or network
+architecture incurs high engineering cost or performance penalty.
+Even if a new layer may be expressed in terms of existing library
+primitives, performance is often far from peak for two reasons: missed
+optimizations across operators, and no tuning for its specific
+size, shape and data flow~\cite{FBFFT15}.  Our work aims at addressing this
+\emph{productivity gap}.\footnote{The ``700 layers'' is a reference to
+  a seminal paper on programming languages: P.~J. Landin. The next 700
+  programming languages. \emph{Communications of the ACM},
+  9(3):157--166, 1966.}
+
+In parallel to the software problem, a hardware race has begun, fueled by the
+needs for energy-efficient computing. With Google's TPU~\cite{TPU17}
+and Microsoft's Brainwave project~\cite{Brainwave17} on the bleeding edge,
+many large tech companies are pursuing their own hardware.
+At Google~I/O~2018, Turing-award recipient John Hennessy called
+for fully rethinking our hardware, compilers and language support for
+domain-specific properties~\cite{HennessyIO18}, citing orders of magnitude
+speedup opportunities and power constraints caused by the advent of dark
+silicon~\cite{DarkSilicon}.
+
+With the increasing problem complexity and hardware limitations,
+growing the size of manually
+optimized libraries will not scale to future demands.  To address
+these challenges, we present a novel \emph{domain-specific flow}
+capable of generating highly-optimized kernels for tensor
+expressions. It leverages optimizations across operators and takes
+into account the size and shape of data.  The polyhedral framework of
+compilation emerged as a natural candidate to design a versatile
+optimization flow satisfying the needs of the domain and target
+hardware. It has demonstrated strong results in domain-specific
+optimization~\cite{Polymage,VOBLA,Baghdadi2015Pencil,Elango:2018:DDL:3211346.3211354},
+expert-driven meta-programming~\cite{URUK,CHiLL,Clay}, embedding of
+third-party library code \cite{DBLP:conf/pldi/KongVSFPS13}, and
+automatic generation of efficient code for heterogeneous
+targets~\cite{PlutoGPU,RStream,PouchetFPGA,PPCG2013,Baghdadi2015Pencil,Zinenko2018Spatial}.
+We attempt to take the best of both worlds, defining a domain-specific
+language rich enough to capture full sub-graphs of modern
+Machine Learning (ML) models,
+while enabling aggressive compilation competitive to native
+libraries. In doing so, we may temporarily sacrifice some of the
+performance of über-optimized large matrix multiplications (e.g., compared
+to the recent Diesel polyhedral compiler \cite{Elango:2018:DDL:3211346.3211354})
+while providing full automation and ML framework integration.
+Note that there is no fundamental difficulty in combining both approaches,
+recognizing and
+linking external library kernels when appropriate,
+as illustrated in \autoref{sec:matching}.
+
+Our contributions are the following:
+\begin{enumerate}
+\item the Tensor Comprehensions (TC) Domain-Specific Language (DSL)
+  with a tensor notation close to the mathematics of deep learning,
+  with an emphasis on improving productivity while maintaining a
+  direct lowering path to the intermediate representation of a
+  parallelizing compiler for GPU acceleration;
+\item an intermediate representation and Just-In-Time optimizing
+  compiler based on the polyhedral framework, enabling complex program
+  transformations and levels of automation unmatched by any other
+  compiler for the acceleration of computational sub-graphs of neural
+  networks;
+\item coordinated optimization algorithms with integrated functional
+  correctness, profitability modeling, domain and target
+  specialization; we propose a layered approach, relying on integer
+  linear programming and other polyhedral algorithms to address the
+  core program optimization and synthesis challenges, while resorting
+  to evolutionary algorithms as a higher level of control, to select
+  high level strategies and fine-tune transformation parameters;
+\item the transparent integration of our flow into
+  PyTorch~\cite{PyTorch} and Caffe2~\cite{Caffe2}, providing the fully
+  automatic synthesis of high-performance GPU kernels from simple
+  tensor algebra.
+\end{enumerate}
+
+The TC flow is also portable to other ML frameworks with a few lines
+of code. While our initial implementation focuses on Nvidia GPUs, the
+core technology applies to other types of accelerators with shared or
+partitioned
+memory~\cite{RStream,PouchetFPGA,PPCG2013,YukiDistributed13}; these
+include vector and SIMD accelerators, and also the generation of
+computational patterns suitable for ASICs with systolic designs and
+efficient storage management involving non-volatile memory
+technologies.

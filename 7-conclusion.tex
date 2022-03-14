@@ -1,0 +1,33 @@
+\section{Conclusion}
+We presented and evaluated the first fully automatic, end-to-end flow,
+mapping a high-level mathematical language to high-performance
+accelerated GPU kernels. TC resembles the mathematical notation of a
+deep neural network and makes it easy to reason about, communicate,
+and to manually alter the computation and storage/computation
+trade-offs. Our flow leverages decades of progress in polyhedral
+compilation to implement the heavy-duty program transformations,
+analytical modeling of profitable optimizations, and code
+synthesis. It also implements domain-specific optimizations, code
+generation, autotuning with a compilation cache, and lightweight
+integration within Caffe2 and PyTorch. This unique combination differs
+from alternative proposals relying mainly on autotuning
+such as TVM \cite{autotvm}, or
+pattern-based transformations such as PlaidML \cite{PlaidML}.
+
+TC is capable of quickly synthesizing solid accelerated implementations
+that effectively lift bottlenecks in large training runs. In practice,
+such bottlenecks slow down ML research significantly, requiring
+substantial engineering efforts to be mobilized. Our contribution
+addresses this productivity gap; it brings more expressive power and
+control in the hands of domain experts, relieving ML frameworks'
+dependence on highly tuned vendor libraries, without compromising
+performance.  TC automates boilerplate optimization that has been
+replicated over the numerous deep learning frameworks, and builds on a
+generic polyhedral intermediate representation and libraries shared
+with other domains (image processing, linear algebra) and
+general-purpose compilers (LLVM/Polly).  Future work includes
+additional model-based domain-specific optimizations, CPU code
+generation, learning best mapping configurations automatically,
+automatic differentiation, interaction with the graph-level optimizer,
+and providing a path to emit a series of calls to a native library or
+hardware acceleration blocks.

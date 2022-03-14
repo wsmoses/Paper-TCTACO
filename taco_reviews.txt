@@ -1,0 +1,379 @@
+Decision Letter (TACO-2019-13)
+
+From:
+
+koen.debosschere@ugent.be
+
+To:
+
+albert.cohen@inria.fr
+
+CC:
+
+koen.debosschere@ugent.be
+
+Subject:
+
+TACO-2019-13: Decision
+
+Body:
+
+Dear Professor Cohen, 
+
+We have received the reviews for your manuscript, “The Next 700 Accelerated Layers: From Mathematical Expressions of Network Computation Graphs to Accelerated GPU Kernels, Automatically,” which was submitted for possible publication in ACM TACO. 
+
+The Associate Editor in charge of your manuscript  recommends a major revision. 
+
+This means that we encourage you to resubmit a revised version of your manuscript (preferably within one or two months). The hard deadline is 90 days. If you submit your revised manuscript on time, it will be re-reviewed by the same set of reviewers to make sure that the changes adequately address the issues raised.  If they are adequately addressed, the manuscript will be Accepted.  If they are not adequately addressed, the manuscript will be Rejected.  The page limit for a revised manuscript remains 25 pages. 
+
+According to ACM rules, your manuscript stays "under submission" during the revision period. Hence, unless you explicitly withdraw your manuscript, you are not allowed to submit it elsewhere. 
+
+See: http://www.acm.org/publications/policies/sim_submissions 
+
+Once you have made the revision, resubmit your manuscript in the Author Center of Manuscript Central, under the "Manuscripts Waiting to be Revised" heading together with an additional letter to the Associate Editor explaining how you addressed the key issues in the reviews. 
+
+As always, you can find information for authors at: 
+
+http://taco.acm.org/authors.cfm 
+
+If you have any questions please contact me as soon as possible. 
+
+Sincerely, 
+Koen De Bosschere 
+Editor-in-Chief of ACM TACO 
+
+-------------------------------------------- 
+Here are the Editors' comments: 
+
+All reviewers are generally positive about this paper. However, many clarification questions are raised, which must be addressed in the revision. These are all expected to offer insights into your contributions. Prior work, TVM (and perhaps also GLOW) needs to be compared against or qualitatively justified against your contributions. 
+
+-------------------------------------------- 
+Here are the reviews: 
+
+Referee: 1 
+
+Recommendation: Needs Minor Revision 
+
+Comments: 
+The issue with papers like this is that there is so much to talk about that you simply cannot fit it all into the number of pages available and, inevitably, interesting information is left out or the subject can only be covered to a limited depth, given the breadth of work performed.  I think, on reflection, that the authors have struck the right balance between high-level descriptions of the new DSL and coverage of the whole compilation flow, combined with a worked example to help explain the optimization steps that can be applied.  There is a lot of information here in this paper and although most readers would want more about different facets of it, that would lead to cutting out other text, which is equally important to retain. 
+
+The amount of work that has gone into this manuscript is significant, but it is explained clearly.  I liked the worked example of sgemm being transformed, which aided understanding.  The results speak for themselves and, as the authors note, where hand-tuned library code is better, the user can mix-and-match to get the best of both worlds.  I especially appreciated the detailed evaluation of each benchmark to explain performance.  One aspect that could be improved is the linking between sections, which seem a little disjoint at times. 
+
+Will TC and its associated compiler be open-sourced at some point (on publication)? 
+
+Figure 1 shows the TC syntax in EBNF form.  I'm not sure it's correct and is, at least, confusing.  What do brackets '[' and ']' represent?  Sometimes they seem to represent optional parts of the production rule, for example "[ 'where' range_constraint_list ]" at the end of the first rule for stmt (line 14, page 5), which I read to mean that the keyword 'where' and the range_constraint_list can both be omitted.  Other times they group tokens where the choice is between those tokens, but you must choose one, for example "[ '=' | reduction ]", again in the first rule for stmt (line 13).  The id production rule seems to imply that 0x0 is an identifier, but of course it is really a number. 
+
+Can you give an example of the safe approximations that you used when accesses to tensors are not necessarily affine (page 7, line 45)? 
+
+It would help, when describing the example in figure 4, to refer back to the original sgemm code when mentioning the C tensor, which was confusing for a while (page 9 line 6). 
+
+With memory promotion (section 3.6), if I'm reading this correctly, the indirectly accessed arrays are copied to new arrays that are accessed directly and it's these new arrays that are promoted to shared or private memory (page 11, line 33).  Is that correct? 
+
+Why use a genetic search through the design space when autotuning (page 12, line 14) rather than simply picking points at random for a predefined number of iterations, or until the improvement per iteration is low enough?  Is there anything about the expected shape of the space that lends itself to a genetic algorithm-based search? 
+
+Auto-tuning evaluates 1000s of versions, and takes hours, yet you evaluate only on data that takes micro-seconds to compute with.  Presumably the real-world use-cases you expect are those where the computation will take more than hours (i.e., so you'll see a net gain from autotuning)? 
+
+Is the autotuner the main contributor to performance?  How much value does the autotuner add compared to simply (optimized) compiling using heuristics to choose parameters?  Is part of your contribution the DSL that enables easy autotuning in a later compilation phase? 
+
+What sized inputs did you provide to the benchmarks in figure 6? 
+
+Additional Questions: 
+Review's recommendation for paper type: Full length technical paper 
+
+Should this paper be considered for a best paper award?: Yes 
+
+Does this paper present innovative ideas or material?: Yes 
+
+In what ways does this paper advance the field?: It describes a new domain-specific language for deep learning workloads, called Tensor Comprehensions, and a just-in-time compiler for it that targets NVIDIA GPUs via CUDA kernel creation. 
+
+Is the information in the paper sound, factual, and accurate?: Yes 
+
+If not, please explain why.: 
+
+Rate the paper on its contribution to the body of knowledge in architecture and code optimization (none=1, very important=5): 4 
+
+What are the major contributions of the paper?: Description of the TC DSL, understanding of how code written in it is optimized, and evaluation against an existing framework whose kernels are hand-tuned for performance. 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5): 4 
+
+Rate the overall quality of the writing (very poor=1, excellent=5): 4 
+
+Does this paper cite and use appropriate references?: Yes 
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: No 
+
+If so, please explain.: 
+
+Is the treatment of the subject complete?: Yes 
+
+If not, What important details / ideas/ analyses are missing?: 
+
+What type of paper is this?: This paper is an original, previously unpublished, paper (to the best of my knowledge) 
+
+<b>Recommendations to the authors</b> 
+
+Please list some concrete actionable items to improve the paper. When the paper is resubmitted, the authors will at least have to explain how they dealt with these recommendations.: 1) Please clear up ambiguities with the EBNF grammar in figure 1. 
+
+2) Please give information on input sizes for the workloads. 
+
+Please help ACM create a more efficient time-to-publication process: Using your best judgment, what amount of copy editing do you think this paper needs?: Light 
+
+Most ACM journal papers are researcher-oriented. Is this paper of potential interest to developers and engineers?: Yes
+
+
+Referee: 2 
+
+Recommendation: Needs Minor Revision 
+
+Comments: 
+(There are no comments.) 
+
+Additional Questions: 
+Review's recommendation for paper type: Full length technical paper 
+
+Should this paper be considered for a best paper award?: No 
+
+Does this paper present innovative ideas or material?: Yes 
+
+In what ways does this paper advance the field?: The paper proposes a compilation framework to optimize the performance of DNN kernels.  The major techniques used include Halide-IR, polyhedral transformation and auto-tuning . 
+
+Is the information in the paper sound, factual, and accurate?: Yes 
+
+If not, please explain why.: 
+
+Rate the paper on its contribution to the body of knowledge in architecture and code optimization (none=1, very important=5): 4 
+
+What are the major contributions of the paper?: - Clear descriptions of the DSL, the compilation framework, and enabled transformation features 
+- Performance comparison to the kernels in the state-of-the-art machine learning framework 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5): 4 
+
+Rate the overall quality of the writing (very poor=1, excellent=5): 4 
+
+Does this paper cite and use appropriate references?: Yes 
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: No 
+
+If so, please explain.: 
+
+Is the treatment of the subject complete?: Yes 
+
+If not, What important details / ideas/ analyses are missing?: 
+
+What type of paper is this?: This paper is an original, previously unpublished, paper (to the best of my knowledge) 
+
+<b>Recommendations to the authors</b> 
+
+Please list some concrete actionable items to improve the paper. When the paper is resubmitted, the authors will at least have to explain how they dealt with these recommendations.: This paper describes a new compilation framework with the goal of improving the performance of DNN kernels and applications.   
+
+Though the concepts/techniques in the paper (Halide-IR, polyhedral compilation, etc.) are not entirely new, the framework seems to combine the advantages of several prior compilation frameworks for machine learning and deliver a comprehensive implementation with more complex transformation and mapping. 
+
+Rather than making comparisons to Caffe2 hand-tuned kernels,  it would be more reasonable to compare to the code generated by other ML compilation frameworks (e.g., the best reported by TVM) which may turn out to be better than hand-tuned kernels. 
+
+In addition, could the authors discuss how the new framework can be used for (describing and implementing) kernel fusions and XLA-like sub-graph compilation. 
+
+Please help ACM create a more efficient time-to-publication process: Using your best judgment, what amount of copy editing do you think this paper needs?: Light 
+
+Most ACM journal papers are researcher-oriented. Is this paper of potential interest to developers and engineers?: Yes
+
+
+Referee: 3 
+
+Recommendation: Accept 
+
+Comments: 
+(There are no comments.) 
+
+Additional Questions: 
+Review's recommendation for paper type: Full length technical paper 
+
+Should this paper be considered for a best paper award?: No 
+
+Does this paper present innovative ideas or material?: Yes 
+
+In what ways does this paper advance the field?: Languages and compilation techniques for generating highly efficient compute kernels still seems to be lacking, at least in terms of general use, so I think this paper makes an important contribution in that area.  All too often, writing an efficient kernel requires low-level architecture knowledge, use of intrinsics specific to a micro-architecture, and tuning for memory subsystems.  This paper seeks to present a way to write in a high-level language and still be able to generate highly efficient programs. 
+
+Is the information in the paper sound, factual, and accurate?: Yes 
+
+If not, please explain why.: 
+
+Rate the paper on its contribution to the body of knowledge in architecture and code optimization (none=1, very important=5): 4 
+
+What are the major contributions of the paper?: The major contribution is presenting a language for describing neural network operators and then describing how those kernels can be compiled into highly efficient GPU code.  This is important because today, a high-level representation of such a kernel can frequently result in very sub-optimal code, requiring a significant amount of effort to optimize for a particular architecture.  The paper claims that they have both a technique for describing a kernel in a high-level manner, along with techniques for producing performant code.  Since the area of ML/AI is evolving rapidly, and many researchers are experimenting with new types of networks and operators, a technique for efficiently compiling these new operators would be very helpful. 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5): 3 
+
+Rate the overall quality of the writing (very poor=1, excellent=5): 4 
+
+Does this paper cite and use appropriate references?: Yes 
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: No 
+
+If so, please explain.: 
+
+Is the treatment of the subject complete?: No 
+
+If not, What important details / ideas/ analyses are missing?: In general, I think the treatment of the subject is fairly complete, but the authors neglected to discuss GLOW in Section 5 Related Work.  They did discuss TVM, but since GLOW is arguably used by even more people, I think it would be good to compare and contrast their technique, especially as GLOW also uses LLVM and could be combined with the poly framework for parallelization. 
+
+What type of paper is this?: This paper is an original, previously unpublished, paper (to the best of my knowledge) 
+
+<b>Recommendations to the authors</b> 
+
+Please list some concrete actionable items to improve the paper. When the paper is resubmitted, the authors will at least have to explain how they dealt with these recommendations.: While I like the paper, I think it will be even stronger once the authors target something other than just GPUs.  One of the strengths of Halide is that it can target CPUs, GPUs, etc., and allows for optimizing algorithms in very different ways in order to address those targets.  It will be interesting to see how well this paper's techniques can can handle different targets, e.g. CPUs which require code to have much higher cache locality in order to be efficient. 
+
+It would also be good if the paper addressed data types.  I'm assuming that everything is single-precision floating point, as no mention of data types is made in the language.  However, most high-performance inferencing frameworks are moving to 8-bit integer data types or even fewer bits.  So, addressing this might be interesting, e.g. should the user have to specify data types, or can this be handled implicitly, e.g. weights and features are 8-bit, accumulators are 32-bit, etc.? 
+
+Please help ACM create a more efficient time-to-publication process: Using your best judgment, what amount of copy editing do you think this paper needs?: Light 
+
+Most ACM journal papers are researcher-oriented. Is this paper of potential interest to developers and engineers?: Yes
+
+
+Referee: 4 
+
+Recommendation: Needs Major Revision 
+
+Comments: 
+(There are no comments.) 
+
+Additional Questions: 
+Review's recommendation for paper type: Full length technical paper 
+
+Should this paper be considered for a best paper award?: 
+
+Does this paper present innovative ideas or material?: Yes 
+
+In what ways does this paper advance the field?: It presents the Tensor Comprehensions DSL and shows how to apply a suite of state-of-the-art optimizations and auto-tuning designed to optimize them on GPUs and multicores. 
+
+The real merit of the paper is not in any single idea (many are already known), but showing how to put the whole system together and achieve high performance. 
+
+Is the information in the paper sound, factual, and accurate?: Yes 
+
+If not, please explain why.: 
+
+Rate the paper on its contribution to the body of knowledge in architecture and code optimization (none=1, very important=5): 3 
+
+What are the major contributions of the paper?: I don't think there is any single big idea in this paper, but I see value in the system as a whole.  I suspect that folks interested in citing a single work that puts these many ideas together will find this a good reference. 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5): 3 
+
+Rate the overall quality of the writing (very poor=1, excellent=5): 4 
+
+Does this paper cite and use appropriate references?: Yes 
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: Yes 
+
+If so, please explain.: Maybe, see below. 
+
+Is the treatment of the subject complete?: No 
+
+If not, What important details / ideas/ analyses are missing?: Comparisons to prior work are missing. 
+
+What type of paper is this?: This paper is an original, previously unpublished, paper (to the best of my knowledge) 
+
+<b>Recommendations to the authors</b> 
+
+Please list some concrete actionable items to improve the paper. When the paper is resubmitted, the authors will at least have to explain how they dealt with these recommendations.: Overall, I commend the authors for this impressive amount of work.  It's clear that this system as a whole offers some advantages over what's out there. 
+
+At the same time, most of the ideas are similar to ones that have been proposed before. This paper doesn't do a great job explaining the important differences in a deep way. Also, I think the paper could be written in a more accessible way with a better evaluation.   
+
+On page 4, lines 24 - 28, a conv2d function is described, but it could be explained in more detail. It's not clear how you know meaningful values for the iterators.  Section 2.1 is too short to figure it out properly. Perhaps do fewer examples but explain them in more detail.  How does a programmer know if the inference was correct or as intended? The DSL is claimed to be a contribution, so more text spent explaining it is justifiable.   
+
+Related to this is a more serious concern about the generality and usefulness of TC. It appears to offer a better abstraction on a rather narrow set of kernels. How broadly useful is this new language? Furthermore, many of the features of TC are in TVM, albeit in a different form.  Can you delineate your contributions over these prior works in a more meaningful way? 
+
+Section 3.1 is a bit rambling. Much of page 7 lacks a clear focus. Section 3 could better explain what all the pieces are and how they fit together.  I didn't get much information out of Figure 4 as currently explained. 
+
+The evaluation is missing comparisons to some prior work.  No other compiler is compared against directly, although others have been proposed, like TVM.  The authors cite TVM extensively and even call it a competitor.  Some arguments are made that TVM is not as general as the proposed TC framework. If a comparison to TVM is not feasible, perhaps a more detailed characterization of your whole framework, characterizing components individually, may help justify their importance both in part and as a whole. 
+
+Please help ACM create a more efficient time-to-publication process: Using your best judgment, what amount of copy editing do you think this paper needs?: Light 
+
+Most ACM journal papers are researcher-oriented. Is this paper of potential interest to developers and engineers?: Yes
+
+
+Referee: 5 
+
+Recommendation: Needs Minor Revision 
+
+Comments: 
+(There are no comments.) 
+
+Additional Questions: 
+Review's recommendation for paper type: Full length technical paper 
+
+Should this paper be considered for a best paper award?: No 
+
+Does this paper present innovative ideas or material?: Yes 
+
+In what ways does this paper advance the field?: The authors aim to allow the automatic derivation of performance-oriented GPU kernels from compositions of tensor algebra. Their developed and demonstrated approach (TC) differs from both current practice and proposed research flows. It differs from the former in loosening the dependency on expressing ML-relevant computations in a fashion that can be readily mapped to a limited set of vendor-specific highly-tuned libraries, with their own idiosyncrasies and portability limitations. With respect to other proposed research approaches, the TC flow is more general in its expressiveness than prior image processing DSLs (e.g. Halide) and provides a deeper set of optimization opportunities than many prior ML-focused DSL extensions. The authors demonstrate that the TC flow can, for the majority of the synthesized kernels, provide substantially higher performance than hand-optimized kernels and that such benefits persist across multiple hardware generations of GPUs. 
+
+Is the information in the paper sound, factual, and accurate?: Yes 
+
+If not, please explain why.: 
+
+Rate the paper on its contribution to the body of knowledge in architecture and code optimization (none=1, very important=5): 3 
+
+What are the major contributions of the paper?: While the article describes an important undertaking (automatic synthesis of high-performance GPU kernels from direct expressions of tensor algebra) and a compelling artifact (the TC DSL and associated flow), as noted in the related work section, many of the individual pieces of the proposed approach have been substantially explored or otherwise realized in prior work. This work demonstrates a successful (via experimental performance evaluation showing substantial speedups) practical realization of marrying tensor-specific DSL properties to the benefits offered by a JIT operating on a polyhedral IR in targeting portable, high performance GPU execution of ML-relevant kernels. Further, the authors demonstrate that the proposed platform integrates cleanly with existing ML frameworks. 
+
+Rate how well the ideas are presented (very difficult to understand=1 very easy to understand =5): 4 
+
+Rate the overall quality of the writing (very poor=1, excellent=5): 4 
+
+Does this paper cite and use appropriate references?: Yes 
+
+If not, what important references are missing?: 
+
+Should anything be deleted from or condensed in the paper?: No 
+
+If so, please explain.: 
+
+Is the treatment of the subject complete?: Yes 
+
+If not, What important details / ideas/ analyses are missing?: 
+
+What type of paper is this?: This paper is an original, previously unpublished, paper (to the best of my knowledge) 
+
+<b>Recommendations to the authors</b> 
+
+Please list some concrete actionable items to improve the paper. When the paper is resubmitted, the authors will at least have to explain how they dealt with these recommendations.: Overview: 
+
+What I see as a key goal of the work, namely, to decouple the expression of ML-relevant computations from the particular constraints of the current set of heavily optimized vendor library calls without sacrificing performance on the altar of elegance, is laudable. The authors convincingly argue for their style of DSL approach over a language-embedded (e.g. ATen) approach, and demonstrate a relatively complete end-to-end solution for kernel synthesis. Moreover, excepting matrix multiplication, the results are fairly compelling, especially given the noted limitations of the current optimization system wrt register vs. shared memory allocation. That said, and while agreeing with the authors that a) matrix multiplication is the most heavily tuned computation in history and b) there are clear paths to improve TC performance on matrix multiplication, the authors are somewhat remiss in not more deeply analyzing the specifics of their system's current shortcomings in matrix multiplication with respect to a) the degree to which they believe they will be resolved and b) the degree to which there may be other outlier kernels and whether they are likely to be similarly brought in line with the same optimizations for a). 
+
+It would have been nice to see at least one of the competitor DSL approaches compared directly in the performance evaluation section - even a case study on a smaller set of kernels that multiple approaches can all viably target would have been a source of some good insights into the quantitative differences stemming from the qualitative ones described in the article. 
+
+Suggested action items: 
+
+- The discussion of the substantial slowdowns in matrix multiplication could benefit from expansion. Specifically, it would lend greater insight into the general utility of TC if the _degree_ to which the gap between the TC-generated and hand-tuned MM codes would be expected to be adequately addressed through the application of specific known techniques were described in greater detail. While I agree with the expressed sentiment that synthesized kernels should not/will not replace all library calls, it is also important to understand what the consequences will likely be when programmers either make poor choices in this regard or otherwise abdicate the responsibility of making the decision in the first place in the interests of expedience. An outline of how the known additional optimizations will be applied, what challenges may arise in integrating them into TC, and, most importantly, what confidence can be given that MM is alone in its degree of sensitivity to the current limitations of the TC flow would add value - the current treatment for a shortcoming (even a readily fixable one) of this magnitude is overly terse and further evidence would support the authors' optimism that these limitations can be easily overcome. 
+
+- A brief table or other discussion contextualizing the relative time spent in each of the target kernels in state of the art GPU inference and training deployments would help provide insight into the scale of the overall performance impact for different classes of networks. 
+
+- The KRU vs. matmul comparison in Table 2 would be substantially more complete if the authors were able to compare TC against the hand-coded Kronecker factorized codes from [33] or subsequent work (note: admittedly, a quick search of the websites of the authors of [33] did not immediately yield a public link to the implementations mentioned as slated for release in their arXiv publication, so, if said hand-coded kernels are not yet publicly available, a direct comparison would be an undue burden - however, such a comparison would clearly improve the current article) 
+
+
+Minor notes: 
+
+This article has a fair number of typographical errors and at least one instance of non-compliant layout. Most of the former appear to be readily within the purview of any standard spell checker, and the layout of Figure 4 is obviously not within normal margin boundaries. While none of these turned out to pose any particular impediment to comprehension, the lack of attention to presentation detail is not to the work's benefit. 
+
+Typos @ P7L41: "statementn", P16L51: "optimizaing", etc. 
+
+Fig. 2: Top/bottom --> Left/Right 
+
+Fig. 4: Please fix margins 
+
+Fig. 10: Please consider making the X axis ordering consistent with Figs 8 and 9 for ease of reading/cross-comparison 
+
+References on P18 to "Figure 2" should be to "Table 2" 
+
+Please help ACM create a more efficient time-to-publication process: Using your best judgment, what amount of copy editing do you think this paper needs?: Moderate 
+
+Most ACM journal papers are researcher-oriented. Is this paper of potential interest to developers and engineers?: Yes
+
+Date Sent:
+
+08-Mar-2019

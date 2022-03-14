@@ -1,0 +1,655 @@
+\subsection{Lowering to the Polyhedral Representation}
+
+\begin{figure*}[h!tb]
+\vbox{
+  \hbox to \textwidth{
+    \hspace{-2em}
+%  \begin{minipage}{.74\textwidth}
+    \begin{minipage}{.25\textwidth}
+      {\fontsize{6}{6}\selectfont
+        $\displaystyle
+          \begin{array}{l}
+            \mathrm{Domain}
+            \left\{\hspace{-0.7em}
+              \begin{array}{l}
+                \mathtt{S}(i,j),  \\
+                \mathtt{T}(i,j,k) \\
+              \end{array}
+            \hspace{-0.7em}\left|\hspace{-0.7em}
+              \begin{array}{l}
+                0 \leq i < N \\
+                0 \leq j < K \\
+                0 \leq k < M \\
+              \end{array}
+            \right.
+            \hspace{-0.7em}\right\} \\
+            \quad \mathrm{Sequence} \\
+            \quad\quad \mathrm{Filter} \{\mathtt{S}(i,j)\} \\
+            \quad\quad\quad \mathrm{Band} \{ \mathtt{S}(i,j) \rightarrow (i,j) \} \\
+            \quad\quad \mathrm{Filter} \{\mathtt{T}(i,j,k)\} \\
+            \quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (i,j,k) \} \\
+          \end{array}
+          $}
+      \centering
+      \footnotesize\textbf{(a)} canonical \ic{sgemm}
+    \end{minipage}%
+    \hspace{0.5em}
+    \begin{minipage}{.28\textwidth}
+      {\fontsize{6}{6}\selectfont
+        $\displaystyle
+          \begin{array}{l}
+            \mathrm{Domain}
+            \left\{\hspace{-0.7em}
+              \begin{array}{l}
+                \mathtt{S}(i,j),  \\
+                \mathtt{T}(i,j,k) \\
+              \end{array}
+            \hspace{-0.7em}\left|\hspace{-0.7em}
+              \begin{array}{l}
+                0 \leq i < N \\
+                0 \leq j < K \\
+                0 \leq k < M \\
+              \end{array}
+            \right.
+            \hspace{-0.7em}\right\} \\
+
+            \quad \mathrm{Band}
+            \left[\hspace{-0.9em}\begin{array}{l}
+                                   \{ \mathtt{S}(i,j) \rightarrow (i,j) \} \\
+                                   \{ \mathtt{T}(i,j,k) \rightarrow (i,j) \} \\
+                                 \end{array}\right. \\
+            \quad\quad \mathrm{Sequence} \\
+            \quad\quad\quad \mathrm{Filter} \{\mathtt{S}(i,j)\} \\
+            \quad\quad\quad \mathrm{Filter} \{\mathtt{T}(i,j,k)\} \\
+            \quad\quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (k) \}
+          \end{array}
+        $}
+      \centering
+      \footnotesize\textbf{(b)} fused
+    \end{minipage}
+    \hspace{0.5em}
+    \begin{minipage}{.33\textwidth}
+      {\fontsize{6}{6}\selectfont
+        $\displaystyle
+          \begin{array}{l}
+            \mathrm{Domain}
+            \left\{\hspace{-0.7em}
+              \begin{array}{l}
+                \mathtt{S}(i,j),  \\
+                \mathtt{T}(i,j,k) \\
+              \end{array}
+            \hspace{-0.7em}\left|\hspace{-0.7em}
+              \begin{array}{l}
+                0 \leq i < N \\
+                0 \leq j < K \\
+                0 \leq k < M \\
+              \end{array}
+            \right.
+            \hspace{-0.7em}\right\} \\
+            \quad \mathrm{Band}
+            \left[\hspace{-0.9em}\begin{array}{l}
+                                   \{ \mathtt{S}(i,j) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \} \\
+                                   \{ \mathtt{T}(i,j,k) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \}
+                                 \end{array}\right.\\
+            \quad\quad \mathrm{Band}
+            \left[\hspace{-0.9em}\begin{array}{l}
+                                   \{ \mathtt{S}(i,j) \rightarrow (i \bmod 32, j \bmod 32) \} \\
+                                   \{ \mathtt{T}(i,j,k) \rightarrow (i \bmod 32, j \bmod 32) \}
+                                 \end{array}\right.\\
+            \quad\quad\quad \mathrm{Sequence} \\
+            \quad\quad\quad\quad \mathrm{Filter} \{\mathtt{S}(i,j)\} \\
+            \quad\quad\quad\quad \mathrm{Filter} \{\mathtt{T}(i,j,k)\} \\
+            \quad\quad\quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (k) \}
+          \end{array}
+        $}
+      \centering
+      \footnotesize\textbf{(c)} fused, tiled
+    \end{minipage}
+    \hspace{2em}}
+  \vspace{0.4em}
+  \hbox to \textwidth{
+    \begin{minipage}{.38\textwidth}
+      {\fontsize{6}{6}\selectfont
+        $\displaystyle
+          \begin{array}{l}
+            \mathrm{Domain}
+            \left\{\hspace{-0.7em}
+              \begin{array}{l}
+                \mathtt{S}(i,j),  \\
+                \mathtt{T}(i,j,k) \\
+              \end{array}
+            \hspace{-0.7em}\left|\hspace{-0.7em}
+              \begin{array}{l}
+                0 \leq i < N \\
+                0 \leq j < K \\
+                0 \leq k < M \\
+              \end{array}
+            \right.
+            \hspace{-0.7em}\right\} \\
+            \quad \mathrm{Band}
+            \left[\hspace{-0.9em}\begin{array}{l}
+                                   \{ \mathtt{S}(i,j) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \} \\
+                                   \{ \mathtt{T}(i,j,k) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \}
+                                 \end{array}\right.\\
+            \quad\quad \mathrm{Sequence} \\
+            \quad\quad\quad \mathrm{Filter} \{\mathtt{S}(i,j)\} \\
+            \quad\quad\quad\quad \mathrm{Band} \{\mathtt{S}(i,j) \rightarrow (i \bmod 32, j \bmod 32) \} \\
+            \quad\quad\quad \mathrm{Filter} \{\mathtt{T}(i,j,k)\} \\
+            \quad\quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (k) \} \\
+            \quad\quad\quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (i \bmod 32, j \bmod 32) \} \\
+          \end{array}
+        $}
+      \centering
+      \footnotesize\textbf{(d)} fused, tiled, sunk
+      \vspace{3em}
+      \caption{Optimization steps for \ic{sgemm}}
+      \label{fig:tree}
+    \end{minipage}
+  \hfill
+  \begin{minipage}{.65\textwidth}
+    \vskip-1pt
+  {\fontsize{6}{6}\selectfont
+    $\displaystyle\begin{array}{l}
+        \mathrm{Domain}
+        \left[\hspace{-0.9em}\begin{array}{l@{~}c@{~}l}
+                               \{ \mathtt{S}(i,j) & \mid & 0 \leq i < N \wedge 0 \leq j < K \} \\
+                               \{ \mathtt{T}(i,j,k) & \mid & 0 \leq i < N \wedge 0 \leq j < K \wedge 0 \leq k < M \}
+                             \end{array}\right.\\
+        \mathrm{Context} \{ N = M = K = 512 \wedge 0 \leq b_x , b_y < 32 \wedge 0 \leq t_x, t_y < 16 \}\\
+        \quad \mathrm{Filter}
+        \left[\hspace{-0.9em}\begin{array}{l@{~}c@{~}l}
+                               \{ \mathtt{S}(i,j) & \mid & i - 32 b_x - 31 \leq 32 \times 16 \lfloor i / 32 / 16 \rfloor \leq i - 32 b_x \wedge \\
+                                                  & & j - 32 b_y - 31 \leq 32 \times 16 \lfloor j / 32 / 16 \rfloor \leq j - 32 b_y \} \\
+                               \{ \mathtt{T}(i,j,k) & \mid & i - 32 b_x - 31 \leq 32 \times 16 \lfloor i / 32 / 16 \rfloor \leq i - 32 b_x \wedge \\
+                                                  & & j - 32 b_y - 31 \leq 32 \times 16 \lfloor j / 32 / 16 \rfloor \leq j - 32 b_y \}
+                             \end{array}\right.\\
+        \quad\quad \mathrm{Band}
+        \left[\hspace{-0.9em}\begin{array}{l}
+                               \{ \mathtt{S}(i,j) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \} \\
+                               \{ \mathtt{T}(i,j,k) \rightarrow (32 \lfloor i/32 \rfloor, 32 \lfloor j/32 \rfloor) \}
+                             \end{array}\right.\\
+        \quad\quad\quad \mathrm{Sequence} \\
+        \quad\quad\quad\quad \mathrm{Filter} \{\mathtt{S}(i,j)\} \\
+        \quad\quad\quad\quad\quad \mathrm{Filter}\hspace{-0.7em}
+        \begin{array}{l@{~}c@{~}l}
+          \{ \mathtt{S}(i,j) & \mid & t_x = i \bmod 16 \wedge t_y = j \bmod 16 \}
+        \end{array}\\
+        \quad\quad\quad\quad\quad\quad \mathrm{Band} \{\mathtt{S}(i,j) \rightarrow (i \bmod 32, j \bmod 32) \} \\
+        \quad\quad\quad\quad \mathrm{Filter} \{\mathtt{T}(i,j,k)\} \\
+        \quad\quad\quad\quad\quad \mathrm{Band} \{ \mathtt{T}(i,j,k) \rightarrow (k) \} \\
+        \quad\quad\quad\quad\quad\quad \mathrm{Filter}\hspace{-0.7em}
+        \begin{array}{l@{~}c@{~}l}
+          \{ \mathtt{T}(i,j,k) & \mid & t_x = i \bmod 16 \wedge t_y = j \bmod 16  \}
+        \end{array}\\
+        \quad\quad\quad\quad\quad\quad\quad\quad \mathrm{Band} \{\mathtt{T}(i,j,k) \rightarrow (i \bmod 32, j \bmod 32) \} \\
+      \end{array}$}\\
+  \centering
+  \footnotesize\textbf{(e)} fused, tiled, sunk, mapped
+  \end{minipage}}
+}
+  \vskip-1ex
+\end{figure*}
+
+The role of lowering is to bridge the impedance mismatch between the logical
+layout of high level tensor operations (dimension ordering) and the data format
+the polyhedral code generator expects (C-style row-major arrays).  It ensures
+the absence of aliasing and performs range inference for output tensors.
+Based on range inference, TC differs from NumPy-style implicit
+``broadcast'' semantics (non-trivial tensor dimensionality extension)
+adopted by XLA, PyTorch and MXNet.
+
+Our representation derives from schedule
+trees~\cite{Verdoolaege2014ScheduleTrees}, implemented in the \isl\
+library~\cite{ISL10}, and uses a set of node types.  Each
+\ourtoolkitname-statement corresponds to multiple runtime statement
+\emph{instances}, one for every valuation of the index variables.  The root
+\emph{domain node} defines the set of statement instances to be executed.  Due
+to the nature of the \ourtoolkitname-language, the constraints on the index
+variables are always affine, resulting in an exact representation of the set of
+operations.  A \emph{band node} defines a \emph{partial} execution order
+through one or multiple piecewise affine functions defined over iteration
+domains.  The name refers to the notion of a \emph{permutable schedule band}, a
+tuple of one-dimensional schedule functions that can be freely interchanged
+while preserving the semantics of the program.
+%An affine function in a band is often referred to as \emph{schedule
+%dimension}.
+A \emph{filter node} partitions the iteration space, binding its sub-tree to a
+subset of the iteration domain. It can be arranged into \emph{set or sequence
+nodes} depending on whether or not the order of execution must be
+serialized.  \emph{Context nodes} provide additional information on the
+parameters, e.g., tensor extents or GPU grid/block sizes.  Finally,
+\emph{extension nodes} introduce auxiliary computations that are not part of
+the original iteration domain, which is useful for, e.g., introducing data-copy
+statements.
+
+A \emph{canonical} schedule tree for a TC is defined by an outer
+\emph{sequence} node, followed by \emph{filter} nodes for each TC statement.
+Inside each filtered branch, \emph{band} nodes define an identity schedule with
+as many one-dimensional schedule functions as loop iterators for the statement.
+The implicit loops form a permutable band as per TC semantics.
+%% AZ: this was never implemented
+%Imperative-style loops available in TC are not freely permutable and therefore
+%separate Band nodes are created for each of them following the syntactic
+%order.
+
+In addition to the schedule tree, our representation includes tensor access
+functions, which map the index variables to the subscripts of tensors they
+access. These subscripts are not necessarily affine, in which case
+over-approximations are used~\cite{Benabderrahmane2010Polyhedral}: a non-affine
+access is assumed to potentially access \emph{all} values along the given
+dimension.  After the polyhedral representation is constructed, dependence
+analysis can be used to ensure the absence of out-of-bounds
+accesses~\cite{Pugh1994Static}.
+
+%% AZ: this is way too detailed and less relevant for TACO audience.
+%
+%\footnote{Broadcasting is a set of
+%  non-trivial rules that allow implicit conversion between tensors of
+%  different dimensions. It enables certain tensor operations even when an
+%  appropriate library implementation does not exist for those non-conforming
+%  shapes. It carries its baggage and ambiguities when dealing with higher
+%  dimensional tensor contractions, as demonstrated in the TensorFlow Github
+%  issue \#5523.} TC does not need such implicit syntactic sugar. For example,
+%the TC corresponding to the so-called outer product matrix multiplication \ic{[p,q,r] matmul [1,s,r,t] -> [p,s,q,t]} is simply:
+% \begin{tclisting}
+%def outerProductMM(float(P,Q,R) A, float(S,R,T) B) -> (O) {
+%  O(p,s,q,t) +=! A(p,q,r) * B(s,r,t)
+%}
+%\end{tclisting}
+%One may derive a further transformed \ic{QPTS} layout (named by the
+%ordering of output dimensions) instead of \ic{PSQT}, if desirable.
+
+Additional lowering steps include forward substitution of convolution
+expressions (storage/computation trade-off), padding, mirroring and clipping.
+The process is analogous to Halide's~\cite{Halide}.
+
+% The reader unfamiliar with polyhedral compilation---iteration domains, affine
+% access and dependence relations, scheduling and polyhedral code
+% generation---may refer to Section~\ref{sec:polyhedral_background} in the
+% supplementary material.
+
+\paragraph{Example}
+\figref{tree}(a) shows the canonical schedule tree
+for unions of relations where tuples of
+iterators are guarded with syntactic identifiers~\cite{Pugh1994Static}.%
+\footnote{We use the
+\emph{named relation notation} of \ic{iscc}~\cite{Verdoolaege2011iscc}.
+The declaration of parameters $(N,M,K) \rightarrow \{\dots\}$ is omitted
+hereinafter for brevity.} for the \ic{sgemm} TC defined on
+Page~\pageref{page:sgemm}.  One recognizes a 2-D nest from the initialization
+statement followed by a 3-D nest for the update statement.  The schedule can be
+either parametric in input sizes, or have extra context information on the
+tensor sizes.  In cases where \emph{band} nodes do not define an injective
+schedule, the statement instances are scheduled following the lexicographical
+order of their domain coordinates.
+
+% \aznote{This is \textbf{NOT} how it is done now, but it is closer to the semantics of the TC.  Not sure isl scheduler will be happy to see this.  Feel free to use the following ``fused'' schedule instead}.
+% \acnote{We'll need to run dependence analysis on those, and uncover coalesced bands from imperative dimensions.}
+%% AZ: this is rather trivial, can save space.
+%
+%\paragraph{Out-of-bounds accesses}
+%The polyhedral model allows for relational encoding of tensor accesses.
+%Composing those with the iteration domains expressed as sets allows for
+%computing the set of all accessed tensor elements, i.e. the statement's
+%footprint, and for checking whether it fits the (specified or inferred) tensor
+%sizes.
+%Note that access relations enable detection of out-of-bounds accesses.
+%Applying the access relation to the domain $\mathcal{F} = \mathcal{D}
+%. \mathcal{A}$ produces the set of all accessed tensor elements, i.e., the
+%statement's footprint.
+%Elements that belong to the footprint but not to the set of tensor elements
+%$\mathcal{T}$, inferred from the tensor shapes, correspond to out-of-bounds
+%accesses.
+%Hence $(\mathcal{D} . \mathcal{A}) \backslash \mathcal{T} = \emptyset$ is a
+%condition of absence of out-of-bounds accesses.
+
+%
+% \aanote{Halide has an autoscheduler that efficiently computes schedules that respect dependencies and optimizes for a target-specific machine model. It trades off locality, parallelism, and redundant recompute. It can be viewed as an extension of polymage. It's great for stencil pipelines, but less good for tensor computations for complex reasons. I'd need to talk to Ravi to crisply define the problem, but I believe it's related to weak reasoning about long-range reuse of input data. It also doesn't block reduction dimensions, so for a sgemm it just tiles the output. It also doesn't search over different data layouts, doesn't considering factoring associative reductions, and doesn't do hierarchical tiling. And the GPU version mentioned in the paper never made it into Halide master. Halide can do all these things, but the autoscheduler doesn't consider them. It might be enough to say that it's currently limited to the scheduling transformations that make the most sense for stencil pipelines. There might also be a meaningful difference in searching a scheduling space (in a general non-affine landscape) vs being able to directly solve for an optimal schedule (in the polyhedral case).}
+% \aznote{AFAIU, Halide's autoscheduler operates on functions (or C statements), polyhedral scheduler operates on individual loop iterations, so we express things like fusion+loop skewing+loop reversal in one shot.  Same goes for dependence information, per-iteration definitions are available and used for, e.g. fusion+shifting. There's clearly a mismatch between what's been pushed to master and what's described in the papers, and most of my knowledge comes from the papers.}
+%
+
+\subsection{Tunable Polyhedral Scheduling}
+Program transformation in the polyhedral model involves defining a different
+schedule, which corresponds to a different (partial or total) order of
+traversing the iteration domain.  The instances of all statements are scheduled
+completely automatically~\cite{Bondhugula2008Pluto} using one of several
+scheduling strategies with which we extended the \isl
+scheduler~\cite{Verdoolaege2017scheduler}.
+
+The \isl scheduler iteratively solves integer linear programming problems to
+compute piece-wise affine functions that form new schedule \emph{band} nodes.
+Internally, it operates on a data dependence graph where nodes correspond to
+statements and edges express dependences between them.  It introduces the
+\emph{affine clustering} technique that is based on computing the schedule
+bands separately for individual strongly-connected components of the dependence
+graph and then clustering these components iteratively and scheduling them with
+respect to each other.  Clustering not only decreases the size of the linear
+problems the scheduler has to solve, but also serves as a basis for \isl's loop
+fusion heuristic.
+
+% \aanote{The clustering algorithm sounds the same as the clustering done by
+% Halide's autoscheduler, but at the leaves it searches over tilings and
+% evaluates a cost model instead of solving an ILP. (Later) Actually take that
+% with a grain of salt, because I'm not sure I understand isl yet.}
+% \aznote{Could you elaborate?  We may have a terminology clash... Clustering
+% in isl is essentially fusion + polyhedral scheduling where the dependent graph
+% components being fused can be scheduled wrt each other.}
+
+% I'm not sure what the intended connection between
+% "clustering decision" and "scheduling strategy" is,
+% but in the code, the fusion_strategy (corresponding to "clustering decision")
+% is the only tunable scheduler option, allow_skewing and positive_orthant
+% being the other two (non-tunable) options.
+We extended \isl to provide
+finer-grained control over the scheduling process.  For affine
+transformations, the user can set additional scheduling options.
+For clustering, the user can
+supply a decision function for pairwise dependence graph component
+combination, after this combination was demonstrated to be valid
+by the scheduler.
+These configuration points serve as a basis for both fixed scheduling
+choices made by \ourtoolkitname and \emph{scheduling
+  strategies}.
+In particular, \ourtoolkitname tells the scheduler to produce
+schedules with only non-negative coefficients and without any skewing.
+% These are the default values in makeUnmappedMappingOptions:
+%      .outerScheduleAllowSkewing(false)
+%      .outerSchedulePositiveOrthant(true)
+%      .intraTileScheduleAllowSkewing(false)
+%      .intraTileSchedulePositiveOrthant(true)
+% and these options are not tuned.
+Clustering decisions allow TC to control the conventional minimum and
+maximum fusion targets, and additionally, maximum fusion that
+preserves at least three nested parallel loops (to be mapped to CUDA
+blocks and threads).
+With the scheduling strategies
+one may optionally enable point band rescheduling
+(i.e., scheduling the inner dimensions after tiling).
+In particular, two fusion strategies can be specified, one for the global
+schedule and one for the point band.  If these fusion strategies are different,
+then the point band (along with all its descendants) is rescheduled after
+tiling, preserving only the outer tile band of the original schedule.
+Scheduling strategies can be selected through the
+autotuning process.  In all cases, we enforce that a single GPU kernel is
+generated.
+
+\paragraph{Example} Observing that the \texttt{C} tensor in \ic{sgemm} (see
+Page \pageref{page:sgemm}) is reused between two nests, the scheduler
+constructs the tree in \figref{tree}(b) to leverage access locality and improve
+performance.  This tree features an outer band node with \ic{i} and \ic{j}
+loops that became common to both statements, which corresponds to \emph{loop
+fusion}.  The sequence node ensures that instances of \ic{S} are executed
+before respective instances of \ic{T} enabling proper initialization.  The
+second band is only applicable to \ic{T} and corresponds to the innermost
+(reduction) loop \ic{k}.
+
+Overall, the tuning process is greatly simplified compared to Halide and
+TVM. Relying on a heavy-duty,
+well-understood analytical optimization framework based on integer linear
+programming, TC exposes a small, dedicated
+search space of high-level strategies and block size parameters.
+Beyond guaranteeing the validity of the transformation,
+dependences can be used to explore parallelization opportunities
+(independent instances can be executed in parallel),
+to improve data access locality (dependent instances
+executed close in time) or to automate
+vectorization~\cite{Verdoolaege2017scheduler,Bondhugula2008Pluto,Zinenko2018Spatial,Vasilache2012joint,Pou11}.
+
+\subsection{Imperfectly Nested Loop Tiling}
+Let us first describe the general setting for loop tiling on schedule trees,
+before developing the TC-specific specialization and extensions.
+
+\paragraph{Tiling permutable bands}
+Pluto has been very successful at decoupling the actual implementation
+of loop tiling from the preparation of an affine schedule exposing
+permutable loops amenable to tiling \cite{Bondhugula2008Pluto}. This
+% please do not reintroduce any "allows to"; it's grammatically wrong
+design allows exploring locality and parallelization tradeoffs
+without bloating the schedule representation with complex quasi-affine
+forms capturing the precise distribution of iterations into tile and
+point loops. Schedule trees ease the implementation of such a
+decoupled design, capturing tiling as the conversion of a permutable
+schedule band into a chain of two bands, with the outer band
+containing tile loops and the inner band containing point loops with
+fixed trip count. This can be seen as a conventional strip-mine and
+sink transformation.
+
+% \aanote{I don't understand how you can do clustering without also doing
+% tiling as you go. Doesn't that rule out tile-level fusion? Reading ahead, I
+% must be missing something, because the sgemm initialization and update are
+% fused at the tile level.}
+% \aznote{Most polyhedral schedulers do tiling separately from
+% scheduling. OTOH, they produce "tilable" loop nests (aka permutable bands)
+% and we can check/enforce this property in the subsequent transformations.
+% Also, I find the term tiling sometimes overused in polyhedral community:
+% Pluto and descendants (PolyMage included) use iteration domain tiling in a
+% sense of scheduling.   Before this project, isl/ppcg could not tile
+% imperfectly nested loops, which is equivalent to sinking (akin to Halide fusion) after tiling. }
+
+In addition to conventional loop tiling, the schedule tree representation
+% please do not reintroduce any "allows to"; it's grammatically wrong
+allows tiling imperfectly nested loops.
+The technique is based on the following observation: if a loop does not carry
+dependences, it can be sunk below any other loop.
+In valid schedules, all dependences are carried (or satisfied) by some loop,
+along which they feature a positive distance.
+A dependence is only violated if it has a negative distance along some loop
+\emph{before} it is carried by another loop~\cite{KennedyAllen2002compilers}.
+Parallel loops do not carry dependences by definition and therefore do not
+affect dependence satisfaction or violation.
+Therefore, imperfectly nested tiling may be implemented by first tiling bands
+in isolation and then sinking parallel point loops in the tree.
+During this process, the point band is replicated in each sub-tree below a
+sequence (or set) node and its schedule is restricted to only map
+the relevant points in the iteration domain. Such an extension is particularly
+helpful in Pluto, where bands of permutable loops are rediscovered through a
+post-pass traversal of the affine schedule.
+
+\paragraph{Parallelism and locality trade-offs}
+TC applies two tiling schemes with complementary purposes.
+
+The first one takes place immediately after affine scheduling. It aims
+at exposing a sufficient number of parallel dimensions, some of which
+amenable to memory coalescing, and some better suited to block-level
+parallelism. It also aims at exploiting data locality within thread
+blocks (through shared memory) and individual threads (through
+register reuse). This tiling scheme is influenced by the
+strong emphasis on loop fusion in the affine scheduling heuristic (to
+enforce that the generated code runs as a single GPU kernel). In this
+context, conventional loop nest tiling---considering a single band at
+a time---appears to be sufficient. This is the
+hypothesis we make in this paper.\footnote{The TC implementation
+  supporting our experiments does not implement imperfect loop tiling
+  after affine scheduling.}
+% This used to state that some more recent version of TC
+% does implement imperfect loop tiling, but I'm not aware
+% of any such more recent version.
+% I did implement this at some point, but it never made
+% it into the public version.
+
+The second tiling scheme takes place in the block and thread mapping
+algorithm, which is the topic of the next sub-section.
+
+\paragraph{Example}
+\figref{tree}(c) shows the schedule tree for the fused and tiled \ic{sgemm}.
+It purposely has two imperfectly nested bands.
+Dependence analysis shows that loops \ic{i} and \ic{j} are parallel.
+Therefore, we can tile them and sink the point loops below the band of the
+reduction \ic{k} loop, resulting in the schedule tree in \figref{tree}(d).
+Innermost nested bands with point loops can be joined together into a single
+band after checking for permutability. As indicated earlier, TC implements the
+fusion and tiling scheme of \figref{tree}(c) but not the sunk, imperfect scheme
+of \figref{tree}(d).
+
+\subsection{Mapping to Blocks and Threads}
+A schedule tree can also be used to represent the \emph{mapping} to an
+accelerator, in particular a GPU with multiple blocks and threads.
+This operation is performed by associating certain schedule band members, and
+the corresponding loops, to thread or block indices.
+The polyhedral code generator then omits the loops, if possible,
+and rewrites the
+index expressions accordingly.
+Building on \ppcg, our mapping approach is decoupled from tiling for data locality: grid and
+block sizes are specified independently from tile sizes and are exposed as
+tunable parameters.
+Due to the semantics of blocks and threads, only parallel loops that belong to a
+permutable schedule band can be mapped.
+If point loops are mapped to threads, the ratio between tile sizes and blocks
+sizes controls the number of iterations executed by each thread.
+Note that tile sizes smaller than the block sizes lead to some threads not
+performing any computation.
+
+Contrary to \ppcg, which may generate multiple kernels for a given input
+program, our mapping approach
+handles imperfectly nested loops in a way that generates a single kernel as
+expected by ML frameworks.
+We require the schedule tree to have at least an outermost band with outer
+parallel dimensions.
+The parallel dimensions of the (single) outermost band are mapped to GPU
+blocks.
+In each schedule tree branch, the innermost permutable band, typically
+consisting of point loops, is mapped to GPU threads with the following
+restrictions: the number of mapped dimensions must be equal across branches,
+and on each branch, there must be exactly one band mapped to threads.
+The mapping is performed bottom-up, first attempting to map the leaf bands to threads,
+before moving to a parent band only if none of the children could be mapped to threads.
+
+Thread mapping can be extended to imperfectly nested loops, following
+the same principle as imperfect loop tiling. Within a given thread
+block, one may sink parallel point loops so that multiple bands in a
+sequence (or set) may be equalized in depth and mapped together.
+However, \ourtoolkitname currently does not perform any such sinking.
+
+\paragraph{Example}
+Our mapping strategy produces the schedule tree in \figref{tree}(e).
+We introduced a context node in the schedule tree to indicate the effective
+sizes of the parameters as well as the grid and block sizes (denoted as $b_x,
+b_y$ and $t_x, t_y$, respectively, standing for the values eventually taken by
+\ic{blockIdx.x}, \ic{blockIdx.x} and \ic{threadIdx.x}, \ic{threadIdx.y}).
+This insertion is performed just-in-time, when the effective tensor sizes are
+known.
+Also notice the Filter nodes referring to the $b_x$, $b_y$, $t_x$ and
+$t_y$ parameters: these nodes express the \emph{mapping} to the GPU.
+
+\subsection{Memory Promotion}\label{sec:memory-promotion}
+We are interested in promoting parts of tensors into shared or private
+GPU memory.  While the promotion decision is taken by a heuristic and
+the corresponding imperative code is generated at a later stage,
+schedule trees offer a convenient interface for attaching
+memory-related information.  Memory promotion is based on the notion
+of an \emph{array tile}, a form of data tiling for software-controlled
+local memories.
+It is a constant-size potentially strided block in the array that covers all
+elements accessed by within a given (schedule) tile.
+We build upon and extend \ppcg's support for memory promotion
+\cite{PPCG2013,Verdoolaege2017scheduler} and expose the promotion to shared and
+private memory as boolean options for the autotuner.
+
+\paragraph{Promotion of Indirectly Accessed Arrays.}
+Memory promotion is also applicable to indirectly accessed arrays.
+These frequently occur when modeling variable length data through
+\emph{embedding layers} such as word embeddings in natural language
+processing.  This is particularly important in the case of
+latency-bound benchmarks where there is little computational or
+additional data processing work to hide global memory
+latency. Indirect arrays used to be promoted in the initial TC
+implementation based on \ppcg.  When implementing parallel reductions,
+working towards the first released version of TC, we
+realized that parallelizing reductions was sufficient to deliver
+comparable or higher speedups in our word embedding benchmarks. For
+this reason, indirect array promotion was dropped from the publicly
+available version of TC. We still report on the design for it remains
+interesting to describe how the polyhedral TC flow may optimize
+non-affine data flow.
+
+Without loss of generality, consider the access \ic{O[l+Idx[i][j]][k]}.
+We refer to \ic{O} as the outer array and to \ic{Idx} as the index array.
+In case of nested indirections, outer/index pairs are processed iteratively
+from innermost to outermost.
+While the values taken by the first index expression of the outer array are
+unknown statically, we can still cache them locally as
+\ic{shared\_O[l][i][j][k]} \ic{= O[l + Idx[i][j]][k]}.
+Because some values can be duplicated, indirect promotion is only possible if
+both the outer and the index arrays are only read, since writing to them could
+result in different values that cannot be trivially merged.
+In general, we require the index array to have an array tile, i.e., only a
+fixed-sized block of it is accessed.
+When computing the array tile for the outer array, we ignore the indirect
+parts of the subscript (affine parts are treated as usual).
+We then introduce as many additional index expressions in the promoted outer
+array as are associated to the index array.
+Extents of the array along these new dimensions correspond exactly to the
+array tile sizes of the index array.
+Hence an element of the promoted array contains a copy of the global array
+element that would be accessed with the given index array.
+Indirect subscripts are only used when copying from global memory while
+all other accesses are rewritten through code generation.
+In presence of multiple indirect index expressions that share sub-expressions
+and have equal tile sizes along the corresponding dimensions, it is sufficient
+to introduce a single index expression in the promoted array for all identical
+sub-expressions.
+
+\paragraph{Promotion Heuristics.}
+Directly accessed arrays are promoted to shared
+memory if there exists an array tile of fixed size, if individual elements are
+accessed more than once and if at least one of the accesses does not feature
+memory coalescing.
+The latter is visible from the access relation with the schedule applied to the
+domain: the last access dimension should be aligned with the schedule
+dimension mapped to \ic{x} threads.
+
+For indirect arrays, the coalescing requirement may be dropped because of the
+presence of additional long memory dependences that these cases entail.
+The total amount of shared memory being fixed, one may follow a simple greedy
+heuristic, refusing promotion if the required amount of shared memory would
+outgrow the available resources.
+
+\subsection{Matching Library Calls}\label{sec:matching}
+
+While \ourtoolkitname aims at generating code for any computational kernel
+expressible in the DSL, if (part of) a kernel happens to match a pattern that
+is heavily optimized by some library, then it may as well
+be handled by that library.
+In particular, and as a proof of concept, \ourtoolkitname looks for opportunities
+for letting CUB handle specific forms of reductions \cite{CUB}.
+It is currently restricted to single-dimensional addition reductions.
+
+A reduction is represented in \ourtoolkitname by a binary relation between
+updated tensor elements and the statement instances that
+perform the corresponding updates.%
+\footnote{This description is based on commit \ourtoolkitname commit
+\texttt{8cfdd5764}, which is slightly ahead of the commit used
+in the experiments, but is easier to explain.}
+Right before the mapping to threads, each permutable band
+with a sufficient number of parallel members is checked
+for reductions.  In particular, the band should have at least
+one non-parallel member and the number of parallel members
+plus one (corresponding to the non-parallel member)
+should be greater than or equal to the number of dimensions
+that will be mapped to threads.
+If the band schedules instances of exactly one reduction statement and
+if the instances of any other statement scheduled by the band
+can be moved before or after the reduction instances,
+taking into account the active dependence at (the top of)
+the band, then the remaining band (involving only reduction statement
+instances) will be considered for replacement by a library call
+during thread mapping.
+
+When a band marked for replacement is considered during thread mapping,
+full/partial tile separation is applied---using the block size tuning
+parameter---since only the full tiles can be handled directly by CUB.
+Furthermore, the condition separating full tiles from partial tiles
+should be simple enough as otherwise the cost of determining
+when to invoke CUB would outweigh any possible benefit obtained
+from the invocation.
+If the condition is too complicated, the separation is discarded and
+the band is treated in the same way as bands that were not marked
+for replacement.
+Otherwise, the collection of full tiles is tiled along the parallel
+dimensions since a single scalar variable is used
+to hold the result of the reduction mapped to CUB.
+Synchronization and a special marking is then inserted around
+the point band of this tiling, which is later used during
+code generation to replace each full tile by a call to CUB.
+Finally, since CUB uses some shared memory, its consumpion
+is taken into account during the downstream memory promotion step.

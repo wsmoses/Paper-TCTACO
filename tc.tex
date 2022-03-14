@@ -1,0 +1,402 @@
+\documentclass[format=acmsmall,review=false,screen=true]{acmart}
+
+% Metadata Information
+%% \acmJournal{TACO}
+%% \acmVolume{0}
+%% \acmNumber{0}
+%% \acmArticle{00}
+%% \acmYear{2019}
+%% \acmMonth{1}
+%% \copyrightyear{2019}
+%\acmArticleSeq{9}
+
+% Copyright
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+\setcopyright{acmcopyright}
+\acmJournal{TACO}
+\acmYear{2019}
+\acmVolume{1}
+\acmNumber{1}
+\acmArticle{1}
+\acmMonth{1}
+\acmPrice{}
+\acmDOI{10.1145/3355606}
+
+% DOI
+%\acmDOI{0000001.0000001}
+
+% Paper history
+\received{February 2019}
+\received[revised]{June 2019}
+\received[accepted]{August 2019}
+
+%% Bibliography style
+\bibliographystyle{abbrv}
+%\bibliographystyle{ACM-Reference-Format}
+%\citestyle{acmnumeric}     %% For numeric citations
+
+\pdfoutput=1 % arXiv
+
+\usepackage{tc}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xspace,url}
+%\usepackage{luximono}
+\usepackage{etoolbox} % For advanced style overriders
+\usepackage{booktabs} % For formal tables
+\usepackage{multirow}
+\usepackage{relsize}
+\usepackage{todonotes}
+%\usepackage[hidelinks]{hyperref}
+
+% \usepackage[style=numeric,firstinits=true,%
+% backend=biber,maxbibnames=99,sortcites=true,giveninits=true,%
+% doi=false,isbn=false,url=false]{biblatex}
+
+% \DeclareSourcemap{
+%   \maps[datatype=bibtex]{
+%     % anonymize Vasilache2018TC entry
+%     \map[overwrite]{
+%       \step[fieldsource=entrykey,match={Vasilache2018TC},final]
+%       \step[fieldset=author, fieldvalue={Anonymous Author(s)}]
+%     }
+%   }
+% }
+
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+\newcommand{\ic}[1]{\textrm{\lstinline[language=tc]{#1}}}
+
+\def\topsep{\skip0}
+\def\listisep{\skip0}
+\def\labelsep{\skip0}
+
+\renewcommand{\subsectionautorefname}{Section}
+
+\newcommand{\tblref}[1]{\autoref{tbl:#1}}
+
+\newcommand{\figref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\figreftwo}[2]{Figures~\ref{fig:#1} and~\ref{fig:#2}}
+\newcommand{\figrefthree}[3]{Figures~\ref{fig:#1}, \ref{fig:#2} and~\ref{fig:#3}}
+\newcommand{\subfiglabel}[1]{\textbf{#1}}
+\newcommand{\subfigcap}[1]{\textbf{~~#1}}
+\newcommand{\subfigref}[2]{Figure~\ref{fig:#1}#2}
+
+\usepackage[binary-units]{siunitx}
+\sisetup{table-number-alignment=center,table-align-text-post=false,group-separator={,}}%table-parse-only
+
+\newenvironment{tab}[2][\linewidth]
+{\begin{tabular*}{#1}[t]{@{\extracolsep{\fill}}>{\hspace{4pt}}#2}}%
+{\end{tabular*}}
+
+%\AtBeginEnvironment{minted}{\footnotesize} % size for Python listings
+% \makeatletter
+% \def\mdseries@tt{m}
+% \makeatother
+% \usepackage{minted}
+% \makeatletter
+% \def\mdseries@tt{m}
+% \makeatother
+
+% Global kill switch to remove all comments
+\newif\iffinal
+%\finalfalse % Use me to render comments
+\finaltrue % Use me to hide comments and issue warnings
+
+% Some colors that should be readable on white BG
+% Use for your comments.  Ask Alex for more if necessary.
+\definecolor{DarkGreen}{HTML}{33AA33}
+\definecolor{OldMauve}{HTML}{673147}
+\definecolor{CrimsonRed}{HTML}{990000}
+\definecolor{Plum}{HTML}{8E4585}
+\definecolor{Sienna}{HTML}{882D17}
+\definecolor{Indigo}{HTML}{330088}
+
+% Comment macros.  Please also define an empty macro for \iffinal version.
+\iffinal
+\newcommand{\wmnote}[1]{\TODO{Billy: #1}}
+\newcommand{\acnote}[1]{\TODO{Albert: #1}}
+\newcommand{\aznote}[1]{\TODO{Alex: #1}}
+\newcommand{\ntvnote}[1]{\TODO{Nico: #1}}
+\newcommand{\ttnote}[1]{\TODO{Theo: #1}}
+\newcommand{\zdnote}[1]{\TODO{Zach: #1}}
+\newcommand{\aanote}[1]{\TODO{Andrew: #1}}
+\newcommand{\TODO}[1]{\message{*** TODO #1}}
+\else
+\newcommand{\wmnote}[1]{{\scriptsize \color{red} [[ Billy: #1 ]]}}
+\newcommand{\acnote}[1]{{\scriptsize \color{purple} [[ Albert: #1 ]]}}
+\newcommand{\aznote}[1]{{\scriptsize \color{blue} [[ Alex: #1 ]]}}
+\newcommand{\ntvnote}[1]{{\scriptsize \color{DarkGreen} [[ Nico: #1 ]]}}
+\newcommand{\ttnote}[1]{{\scriptsize \color{CrimsonRed} [[ Theo: #1 ]]}}
+\newcommand{\zdnote}[1]{{\scriptsize \color{Sienna} [[ Zach: #1 ]]}}
+\newcommand{\aanote}[1]{{\scriptsize \color{Indigo} [[ Andrew: #1 ]]}}
+\fi
+
+% Name defines
+\newcommand{\ourtoolkitname}{TC\xspace}
+\newcommand{\isl}{\textit{isl}\xspace}
+\newcommand{\ppcg}{\mbox{PPCG}\xspace}
+\newcommand{\rstreamtf}{\mbox{R-Stream$\cdot$TF}\xspace}
+\newcommand{\pencil}{\textsc{Pencil}\xspace}
+
+% Math notations
+\newcommand{\Ocal}{\mathcal{O}}
+
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing,shapes,arrows,positioning,calc}
+\newfont{\subheadfnt}{ptmbi8t at 10pt}
+\newcommand{\subheading}[1]{\subsection*{\subheadfnt #1}}
+
+\newenvironment{normalitemize}{\setlength{\labelsep}{0.5em}\begin{itemize}}
+                              {\end{itemize}}
+\newenvironment{normalenumerate}{\setlength{\labelsep}{0.5em}\begin{enumerate}}
+                                {\end{enumerate}}
+
+\tikzset{
+  pblock/.style={
+    rectangle,
+    rounded corners,
+    draw=black, thin,
+    minimum width=2.2cm,
+    inner sep=2pt,
+    % outer sep=4pt,
+    align=left,
+    anchor=west,
+    fill=yellow,
+    font={\fontsize{9.5}{10.2}\selectfont},
+    %font={\ttfamily\fontsize{12}{14}\selectfont},
+    text=black,
+    draw=gray,
+    thick,
+    auto,
+    node distance=.2cm and .1cm,
+  },
+  atune/.style={
+    ellipse,
+    rounded corners,
+    draw=black, thin,
+    minimum width=2.2cm,
+    inner sep=2pt,
+    % outer sep=4pt,
+    align=left,
+    anchor=west,
+    fill=green,
+    font={\fontsize{9.5}{10.2}\selectfont},
+    %font={\ttfamily\fontsize{12}{14}\selectfont},
+    text=black,
+    draw=gray,
+    thick,
+    auto,
+    node distance=.2cm and .1cm,
+  },
+  cfedge/.style={
+    font=\itshape,
+    draw=black,
+    ->,
+    >=stealth'
+  },
+  process/.style={
+    draw,
+    fill=orange!50,
+    rectangle,
+    minimum height=1.5em,
+    minimum width=5em,
+    align=center,
+    font=\small,
+  },
+  form/.style={
+    draw,
+    fill=blue!30,
+    ellipse,
+    minimum height=1em,
+    align=center,
+    font=\footnotesize,
+  },
+  slave/.style={
+    execute at end picture={
+      \coordinate (lower right) at (current bounding box.south east);
+      \coordinate (upper left) at (current bounding box.north west);
+      \pgfresetboundingbox
+      \path (upper left) rectangle (lower right);
+    }
+  }
+}
+
+\title[The Next 700 Accelerated Layers]{The Next 700 Accelerated Layers: From Mathematical Expressions of Network Computation Graphs to Accelerated GPU Kernels, Automatically}
+
+\author{Nicolas Vasilache}
+\affiliation{%
+  \institution{Facebook AI Research\footnotemark[2]}
+  \city{New York City}
+  \country{NY, USA}
+}
+\email{nicolas.vasilache@gmail.com}
+\author{Oleksandr Zinenko}
+\affiliation{%
+  \institution{Inria and ENS\footnotemark[2]}
+  \city{Paris}
+  \country{France}
+}
+\email{oleksandr.zinenko@inria.fr}
+\author{Theodoros Theodoridis}
+\affiliation{%
+  \institution{ETH Z\"{u}rich}
+  \city{Z\"{u}rich}
+  \country{Switzerland}
+}
+\email{theodort@student.ethz.ch}
+\author{Priya Goyal}
+\affiliation{%
+  \institution{Facebook AI Research}
+  \city{New York City}
+  \country{NY, USA}
+}
+\email{prigoyal@fb.com}
+\author{Zachary DeVito}
+\affiliation{%
+  \institution{Facebook AI Research}
+  \city{Menlo Park}
+  \country{CA, USA}
+}
+\email{zdevito@fb.com}
+\author{William S.\ Moses}
+\affiliation{%
+  \institution{MIT CSAIL}
+  \city{Cambridge}
+  \country{MA, USA}
+}
+\email{wmoses@mit.edu}
+\author{Sven Verdoolaege}
+\affiliation{%
+  \institution{Polly Labs \& Facebook AI Research\footnotemark[3]}
+  \city{Leuven}
+  \country{Belgium}
+}
+\email{skimo@kotnet.org}
+\author{Andrew Adams}
+\affiliation{%
+  \institution{Facebook AI Research\footnotemark[4]}
+  \city{Menlo Park}
+  \country{CA, USA}
+}
+\email{andrew.b.adams@gmail.com}
+\author{Albert Cohen}
+\affiliation{%
+  \institution{Inria, ENS and Facebook AI Research\footnotemark[2]}
+  \city{Paris}
+  \country{France}
+}
+\email{albert.cohen@inria.fr}
+
+\renewcommand{\shortauthors}{Vasilache, Zinenko, Theodoridis, Goyal, DeVito, Moses, Verdoolaege, Adams, Cohen}
+
+%   Nicolas Vasilache\\
+%   \footnotesize Facebook AI Research\\
+%   \footnotesize \url{ntv@fb.com}\\
+%   \And
+%   Theodoros Theodoridis\\
+%   \footnotesize ETH Z\"{u}rich\\
+%   \footnotesize \url{theodort@student.ethz.ch}\\
+%   \AND
+%   Priya Goyal\\
+%   \footnotesize Facebook AI Research\\
+%   \footnotesize \url{prigoyal@fb.com}\\
+%   \And
+%   Zachary DeVito\\
+%   \footnotesize Facebook AI Research\\
+%   \footnotesize \url{zdevito@fb.com}\\
+%   \And
+%   William S. Moses\\
+%   \footnotesize MIT CSAIL\\
+%   \footnotesize \url{wmoses@mit.edu}\\
+%   \AND
+%   Sven Verdoolaege\\
+%   \footnotesize \hskip-1cm Polly Labs \& Facebook AI Research\hskip-1cm\,\\
+%   \footnotesize \url{sven.verdoolaege@gmail.com}\\
+%   \And
+%   Andrew Adams\\
+%   \footnotesize Facebook AI Research\\
+%   \footnotesize \url{andrew.b.adams@gmail.com}\\
+%   \And
+%   Albert Cohen\\
+%   \footnotesize \hskip-1cm Inria \& ENS, DI \& Facebook AI Research\hskip-1cm\,\\
+%   \footnotesize \url{albert.cohen@inria.fr}
+
+\begin{document}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[2]{With Google AI at the time of publication.}
+\footnotetext[3]{With Cerebras at the time of publication.}
+\footnotetext[4]{With Adobe at the time of publication.}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\begin{abstract}
+Deep learning frameworks automate the deployment, distribution,
+synchronization, memory allocation, and hardware acceleration of
+models represented as graphs of computational operators. These
+operators wrap high-performance libraries such as cuDNN or
+NNPACK. When the computation does not match any predefined library
+call, custom operators must be implemented, often at high
+engineering cost and performance penalty, limiting the pace of
+innovation. To address this productivity gap, we propose and
+evaluate: (1) a domain-specific language with a tensor
+notation close to the mathematics of deep learning; (2) a
+Just-In-Time optimizing compiler based on the polyhedral framework;
+(3) carefully coordinated linear optimization and evolutionary
+algorithms to synthesize high-performance CUDA kernels; (4) the
+transparent integration of our flow into PyTorch and Caffe2,
+providing the fully automatic synthesis of high-performance GPU
+kernels from simple tensor algebra. The performance is comparable
+to, and often exceeds the performance of highly tuned libraries.
+\end{abstract}
+
+\keywords{deep learning layers, polyhedral compilation, GPU acceleration.}
+
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10011007.10011006.10011041</concept_id>
+<concept_desc>Software and its engineering~Compilers</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Compilers}
+
+\maketitle
+
+\input{1-introduction}
+\input{2-tensor-comprehensions}
+\input{3-workflow}
+\input{4-polyhedral-compiler}
+\input{5-tuning-and-caching}
+\input{9-integration}
+\input{6-examples}
+\input{8-related-and-future-work}
+\input{7-conclusion}
+
+\begin{acks}
+  This work was partly supported by a grant from Facebook to ETH Zürich and by the European Commission through the MNEMOSENE project id.\ 780215. It would not have been possible without the long-term committment of ARM, funding much of the development of isl in the context of the Polly Labs initiative of ARM and Inria in collaboration with ETH Zürich.
+  %
+  We are indebted to L\'eon Bottou for the constant support, feedback, and for providing much of the scientific inspiration and background for Tensor Comprehensions. We are grateful to Cijo Jose and Moustapha Ciss\'e with whom we derived the Kronecker Research Unit experiment. We would also like to thank Antoine Bordes and Yann Lecun for making this collaboration possible and for their insights.
+\end{acks}
+
+% \input{a-appendix}
+
+\bibliography{pldi2018.bib}
+
+\end{document}

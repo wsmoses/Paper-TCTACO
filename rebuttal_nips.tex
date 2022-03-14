@@ -1,0 +1,198 @@
+\documentclass{article}
+
+\usepackage{nips_2018_author_response}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{todonotes}
+\usepackage[nottoc, notlof, notlot]{tocbibind}
+
+% Global kill switch to remove all comments
+\newif\iffinal
+\finalfalse % Use me to render comments
+%\finaltrue % Use me to hide comments
+
+% Comment macros.  Please also define an empty macro for \iffinal version.
+\iffinal
+\newcommand{\wmnote}[1]{}
+\newcommand{\acnote}[1]{}
+\newcommand{\aznote}[1]{}
+\newcommand{\ntvnote}[1]{}
+\newcommand{\ttnote}[1]{}
+\newcommand{\zd}[1]{}
+\newcommand{\aanote}[1]{}
+%\newcommand{\todo}[1]{\message{LaTeX Warning: you forgot to do: #1}} % don't know how overleaf detects warnings, so piggy-backing on the default message
+\else
+\newcommand{\wmnote}[1]{{\scriptsize \color{red} [[ Billy: #1 ]]}}
+\newcommand{\acnote}[1]{{\scriptsize \color{purple} [[ Albert: #1 ]]}}
+\newcommand{\aznote}[1]{\todo[color=blue!15]{\scriptsize Alex: #1}}
+\newcommand{\ntvnote}[1]{{\scriptsize \color{DarkGreen} [[ Nico: #1 ]]}}
+\newcommand{\ttnote}[1]{{\scriptsize \color{CrimsonRed} [[ Theo: #1 ]]}}
+\newcommand{\zd}[1]{{\scriptsize \color{Sienna} [[ Zach: #1 ]]}}
+\newcommand{\aanote}[1]{{\scriptsize \color{Indigo} [[ Andrew: #1 ]]}}
+%\newcommand{\todo}[1]{{\color{red}\textbf{TODO:}\xspace#1\xspace}}
+\fi
+
+% Name defines
+\newcommand{\ourtoolkitname}{TC\xspace}
+\newcommand{\isl}{\textit{isl}\xspace}
+\newcommand{\ppcg}{\mbox{PPCG}\xspace}
+\newcommand{\rstreamtf}{\mbox{R-Stream$\cdot$TF}\xspace}
+\newcommand{\pencil}{\textsc{Pencil}\xspace}
+
+\bibliographystyle{abbrv}
+\renewcommand{\bibname}{\vspace{-0.5cm}}
+
+\begin{document}
+\thispagestyle{empty}
+We would like to thank the reviewers for their detailed feedback,
+with precise questions and recommendations.
+We would like to further clarify the following points.
+
+\paragraph{Tensor Comprehensions positioning in the ML tool flow}
+As pointed out by R1, Tensor Comprehensions (TC) provides an abstraction that
+can be used in the context of modern machine learning frameworks such as
+PyTorch or Caffe2.
+TC functions are equivalent to operators in a network graph, which imposes
+certain constraints on the design and implementation and,
+at the same time, achieves clear separation of concerns.
+One TC function is guaranteed to be translated to a single GPU kernel.
+TC delegates placement and inter-device data motion decisions to the upstream
+framework that has a global view of the network: oftentimes, frameworks pin
+data to specific devices.
+While TC could indeed recognize matrix multiplications as suggested by R2, the
+decision to generate code from TC or to call a library kernel
+can \emph{also} be delegated to an upstream framework.
+In fact, it is work-in-progress to recognize typical patterns in TC, but
+we decided that reporting the results achieved through our compilation flow
+is more important for a fair assessment of TC.
+
+\paragraph{On the nature of the contribution(s)}
+Novel contributions include (1) the Tensor Comprehensions DSL,
+(2) the polyhedral compilation flow adapted to ML workloads,
+(3) the genetic autotuner.
+The final results are achieved by the combination of these three components.
+The DSL restricts the computations that can be expressed to those that can be
+efficiently analyzed in the polyhedral model.
+The compilation flow exposes a (small) set of controls over the optimization
+decisions to the autotuner.
+The selection of these controls, as opposed to a black-box flow
+offered by most optimizing compilers or to large compositional spaces of
+optimizations (Halide), is a contribution in itself.
+Our flow is modular enough to support different frontend DSLs and
+different autotuning algorithms in future.
+
+As noted by R2, loop fusion may be an important source of performance.
+Contrary to the majority of previous work, TC's polyhedral flow
+allows it to combine a series of loop transformations into a single
+mathematical optimization problem (see~[9,15,16] for details).
+TC can perform more advanced forms of fusion compared to classical pointwise
+loop/operator fusion, involving transpositions, loop reordering or shifting.
+For example, TC has no fixed data layouts and can fuse three matrix
+multiplications and ReLUs into a single loop nest after
+transpositions, reported as MLP3.  If accepted, we intend to use the
+extra page to provide a more detailed example-based analysis of performance
+sources.
+
+The optimization problem at the core of the polyhedral flow is driven by a cost
+function featuring a mix of parallelism and locality objectives (see~[10]).
+%Solving the problem does not require executing the kernel.
+We refer to this as a \emph{model-based} algorithm.
+Because performance models for modern GPUs are scarce and imprecise,
+our flow exposes configuration options such as the number of threads/blocks, or
+the amount of scratchpad memory to use.
+These options are systematically explored by the autotuner, \emph{running} the
+kernel with no input from a performance model.
+We refer to this as a \emph{model-free} algorithm.
+
+\paragraph{Comparison to other DSLs}
+R2 noticed that previous work proposed similar DSLs.
+In particular, the syntax of the Halide DSL for \emph{image processing} is similar.
+Figure~2 of the paper indicates that we rely on Halide's internal
+representation, but not on the language as we found it was missing some
+features like first-class reduction operations or automatic range inference.
+TC DSL stands out from previous work because it was designed to \emph{fit a
+particular optimization scheme} (the polyhedral model) to benefit from
+extensive existing work on loop transformations.
+This guarantees that, unlike in, e.g., OptiML, it is always possible to
+generate GPU code.
+Note that, at the time of writing, Halide did not provide a GPU backend.
+Halide itself does not rely on a polyhedral optimizer, an external tool
+(PolyMage) generates Halide schedules using polyhedral analyses, but it has no
+access to the information TC captures from its language.
+If accepted, we will provide more detailed comparison to other DSLs and
+polyhedral compilation flows.
+
+\paragraph{Participatory design for Usability}
+We definitely share the usability concerns raised by R1 and R2.
+These were present throughout the design of the TC language, and framework integration.
+Instead of giving potential users a ready-made language, we relied on a
+Participatory Design methodology\footnote{M.~J. Muller and S.~Kuhn.
+  Participatory design. {\em Communications of the ACM}, 36(6):24--28, 1993.}
+%\cite{muller1993participatory}
+from the early stages.
+For example, we collaborated with the authors of~[24], evolving the TC
+language to express their new layer in a more concise yet readable way.
+The production model reported in our manuscript (due to anonymization, we
+cannot disclose the exact nature of collaboration) was another language design
+prompt.
+We also collaborated with the maintainers of PyTorch and Caffe2 to provide
+seamless integration with those frameworks.
+That being said, reporting the process and the findings of the user-centered
+design of such a DSL is not only important, but, we believe, deserves a
+dedicated publication.
+
+\paragraph{Miscellaneous}
+We will to provide links to the binaries, sources and documentation in
+the final non-anonymous version for further dissemination and replicability.
+The ``700 layers'' is a reference to a seminal
+paper on programming languages.
+\footnote{P.~J. Landin. The next 700 programming languages. {\em Communications of the ACM}, 9(3):157--166, 1966.}
+%\bibitem{landin1966next700}
+
+%Usability / user study R1
+%R1 qualitative study
+%- we don't have enough time, or a complete language yet (but we did not tell it was not complete)
+%- hard to compare directly because of differences in expressivity
+%- participatory design methodology / back-and-forth communication with potential users
+%
+%R2
+%DSLs for machine learning exist
+%
+%- Halide is not a DSL for machine learning but for image processing; while early ML works focus on image recognition where image processing DSL is a fit, it becomes increasingly hard to express other ML areas, such as language processing, in Halide.  Furthermore, as of time of writing, Halide has no GPU backend (we are aware of the ongoing work and the possibility to emit PTX from LLVM generated by Halide, we are using Halide internally).  Finally, Halide scheduling decisions are not fully automated and those parts that are automated are mostly orthogonal to ours.  In particular, and importantly to ML on GPUs, there is no true fusion (Halide recomputes data whereas we can reuse it thanks to more precise polyhedral analyses).
+%
+%- OptiML seems to have been discontinued (it's not Delite's github anymore)
+%TC does not intend to be a complete programming language or be embedded into other full language, it has been intentionally kept simple and its API string-based.  The idea is to integrate with any modern ML framework independenly of the language used (C++ for Caffe2 or TensorFlow, Python for PyTorch, etc.)  TC operates on individual kernels rather than entire programs, providing clear guarantees (one kernel per TC function) to the upstream framework and leaving higher, graph-level engine to do its work.  Optimization in OptiML is based on (a) rewriting rules for BLAS, which are expected to be performed before TC being called and (b) operator fusion based on code classification (e.g., element-wise vector operation, or vector-vector dot-product) for adjacent statements, which is significantly less flexible than the polyhedral framework in TC that enables a combination of loop reordering/interchange/fusion/fission in a global optimization context.  Finally, OptiML reportedly cannot generate GPU code when the operators do not fit the CUDA programming model whereas TC was designed so that anything that can be expressed in TC does fit that model.
+%
+%- Weld
+%TC does not concern itself with data movements between the devices, or even communicating with libraries (currently).  Instead, it produces CUDA (or LLVM) code for the entire input function.  It assumes the data has been placed on the relevant device by the caller (which is a critical assumption in context of ML frameworks) and takes no placement decision.  Oftentimes, executing some operations on a GPU may be suboptimal, but the cost of data transfer to CPU and back outweighs it.  Such considerations are left to the upstream framework.
+%
+%- The authors claim that one of their contributions is "a collection of
+%model-free and model-based compilation algorithms with a specific domain and
+%target orientation" but it is not at all clear what this refers to.
+%
+%Model-based technique = polyhedral scheduling with a cost function, adapted to the target domain and exposing control knobs
+%heuristic = mapping and greedy promotion, adaptaed to the target domain
+%Model-free = autotuner
+%
+%- The most significant contribution of this paper seems to be the autotuner.
+%The autotuner would not have been possible without the other steps.  By itself, it uses pretty common algorithms.
+%The pruning is based on actual execution time, I don't see what are the alternatives here.
+%
+%- But this raises the question: why not
+%just have TC detect matrix multiply and call the hand-tuned kernels (as other
+%DSLs have done before in similar situations, e.g. OptiML)?
+%Precisely because it has been done before.
+%
+%- If accepted, for the camera ready version it would be good to include a link
+%  to the code/installation and a tutorial for people to try things out.
+%We will be happy to include links to the code and documentation.  These links were omitted from the submission for anonymization reasons.
+
+
+\end{document}

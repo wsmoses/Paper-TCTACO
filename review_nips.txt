@@ -1,0 +1,156 @@
+Reviewer #1
+Questions
+
+1. Please provide an "overall score" for this submission.  8: Top 50% of
+accepted NIPS papers. A very good submission; a clear accept. I vote and argue
+for accepting this submission.
+
+2. Please provide a "confidence score" for your assessment of this submission.
+5: You are absolutely certain about your assessment. You are very familiar with
+the related work.
+
+3. Please provide detailed comments that explain your "overall score" and
+"confidence score" for this submission. You should summarize the main ideas of
+the submission and relate these ideas to previous work at NIPS and in other
+archival conferences and journals. You should then summarize the strengths and
+weaknesses of the submission, focusing on each of the following four criteria:
+quality, clarity, originality, and significance.
+
+The paper has proposed a domain specific language of describing the tensor
+computations, a just-in-time compiler to understand the tensor computations,
+and a highly optimized GPU code for execution. It provides a good abstraction
+over the deep learning libraries such as PyTorch and Caffe to write much
+optimized GPU code.
+
+The paper was clearly written and easy to follow. The examples provided helped
+in understanding the paper better. From significance perspective, this paper
+has much high impact on deep learning model implementation.
+
+The only concern I have is with the usability. The domain specific language
+might seem challenging for users to consume and may have a steep learning
+curve. It would be good if the authors provided any statistics of usage of the
+TC library. Otherwise the authors could conduct a human qualitative study for
+the usability. The only fear is that this DSL could completely go unused,
+irrespective of the flexibility it provides.
+
+4. How confident are you that this submission could be reproduced by others,
+assuming equal access to data and resources?
+        3: Very confident
+
+----------------------------------------------------------------------------
+
+Reviewer #2
+Questions
+
+1. Please provide an "overall score" for this submission.  4: An okay
+submission, but not good enough; a reject. I vote for rejecting this
+submission, although I would not be upset if it were accepted.
+
+2. Please provide a "confidence score" for your assessment of this submission.
+4: You are confident in your assessment, but not absolutely certain. It is
+unlikely, but not impossible, that you did not understand some parts of the
+submission or that you are unfamiliar with some pieces of related work.
+
+3. Please provide detailed comments that explain your "overall score" and
+"confidence score" for this submission. You should summarize the main ideas of
+the submission and relate these ideas to previous work at NIPS and in other
+archival conferences and journals. You should then summarize the strengths and
+weaknesses of the submission, focusing on each of the following four criteria:
+quality, clarity, originality, and significance.
+
+This paper proposes a new DSL for machine learning that uses tensor
+comprehensions. The DSL allows for the succinct expression of many computation
+kernels that are important to machine learning and deep learning applications.
+The authors also show how expressions in their DSL can be automatically
+compiled down to GPUs to produce highly efficient kernels that are competitive
+with state-of-the-art libraries.
+
+The paper clearly represents a significant amount of quality work, including an
+actual implemented system, which is admirable. It is quite clearly written and
+it is obvious what the authors did and why they did it.
+
+The originality is a bit less clear. DSLs for machine learning in the same vein
+as this paper's DSL already exist, such as Halide, OptiML, Weld, etc. If I
+remember correctly, OptiML and Halide both do some sort of polyhedral analysis
+and use performance-improving automatic transformations. The authors should
+compare their work to at least one previous DSL that represents code at the
+same level as TC (as opposed to comparing to something like Caffe or
+TensorFlow, which is essentially just a library at the level that TC is working
+at). The only part that is obviously novel is the tensor-comprehension-based
+syntax, but this isn't evaluated by the authors (or at least, it isn't
+evaluated in the way that a new syntax should be evaluated, which is to either
+show code that it can easily express that previous techniques couldn't, or to
+do a user study).
+
+The authors claim that one of their contributions is "a collection of
+model-free and model-based compilation algorithms with a specific domain and
+target orientation" but it is not at all clear what this refers to.
+
+The most significant contribution of this paper seems to be the autotuner.
+However, the autotuner is not properly evaluated, because the authors did not
+include an ablation analysis. That is, they did not compare their autotuned
+code's performance with, say, a naive implementation or a rule-based tuner. It
+is thus totally unclear as to what the actual benefit of autotuning is.
+Additionally, while the authors suggest interesting pruning heuristics for
+their autotuner, they don't evaluate these heuristics compared with
+alternatives. The comparison to Caffe2 is nice, but it's not clear whether any
+of the techniques you describe are actually responsible for any of the observed
+speedups, as opposed to the speedup being caused by something simple like loop
+fusion.
+
+The authors point out that on dense matrix multiply, their TC-generated code
+performs worse than hand-tuned kernels. But this raises the question: why not
+just have TC detect matrix multiply and call the hand-tuned kernels (as other
+DSLs have done before in similar situations, e.g. OptiML)? This seems like a
+free win that you are just not taking.
+
+I am sure that this work is going to produce a really interesting high-quality
+paper, but the evaluations and comparisons presented in this version of the
+paper are insufficient.
+
+4. How confident are you that this submission could be reproduced by others,
+assuming equal access to data and resources?
+     2: Somewhat confident
+
+----------------------------------------------------------------------------
+
+Reviewer #3
+Questions
+
+1. Please provide an "overall score" for this submission.
+    8: Top 50% of accepted NIPS papers. A very good submission; a clear accept.
+I vote and argue for accepting this submission.
+
+2. Please provide a "confidence score" for your assessment of this submission.
+    3: You are fairly confident in your assessment. It is possible that you did
+not understand some parts of the submission or that you are unfamiliar with
+some pieces of related work. Math/other details were not carefully checked.
+
+3. Please provide detailed comments that explain your "overall score" and
+"confidence score" for this submission. You should summarize the main ideas of
+the submission and relate these ideas to previous work at NIPS and in other
+archival conferences and journals. You should then summarize the strengths and
+weaknesses of the submission, focusing on each of the following four criteria:
+quality, clarity, originality, and significance.
+
+The paper presents a new domain-specific language specifically thought for
+machine learning related tensor mathematical expressions and automatic
+compiling/optimization to GPU kernels. It gives a nice introduction to the
+proposed tensor comprehensions how the compilation/tuning works and presents
+results for several neural network operations.
+
+The paper is well written and of great interest to the NIPS audience. It
+certainly leaves the reader wanting to know more. A few comments are the
+following:
+- It would have been nicer to see results on more modest hardware. Just so that
+  the average reader gets a sense of how it might work on their machines.
+- The TC Kronecker 4408 result for Volta p90 is missing.
+- Maybe better to include what DAG stands for.
+- If accepted, for the camera ready version it would be good to include a link
+  to the code/installation and a tutorial for people to try things out.
+- Just curious, why "700 accelerated layers"? Any particular reason for the 700
+  number?
+
+4. How confident are you that this submission could be reproduced by others, assuming equal access to data and resources?
+    2: Somewhat confident
+

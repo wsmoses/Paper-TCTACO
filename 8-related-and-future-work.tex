@@ -1,0 +1,207 @@
+\section{Related Work}
+
+Despite decades of progress in optimizing and parallelizing
+compilation, programmers of computationally intensive applications
+complain about the poor performance of optimizing compilers, often
+missing the machine peak by orders of magnitude. Among
+the reasons for this state of the affairs, one may cite the complexity
+and dynamic behavior of modern processors, domain knowledge required
+to prove optimizations' validity or profitability being unavailable to
+the compiler, program transformations whose profitability is difficult
+to assess, and the intrinsic difficulty of composing complex
+transformations, particularly in the case of computationally intensive
+loop nests \cite{URUK,Clay}.
+
+Several contributions have successfully addressed this issue, not by improving
+a general-purpose compiler, but through the design of
+application-specific program generators, a.k.a.\ active libraries
+\cite{VG98}. Such generators often rely on feedback-directed
+optimization to select the best generation schema \cite{Smi00}, as
+popularized by ATLAS \cite{ATLAS} for dense matrix operations (and more
+recently BTO \cite{BTO09}) and FFTW
+\cite{FFTW} for the fast Fourier transform.
+Most of these generators use transformations previously proposed for
+traditional compilers, which fail to apply them for the aforementioned
+reasons. The SPIRAL project
+\cite{SPIRAL} made a quantum leap over these active libraries, operating on a
+domain-specific language (DSL) of digital signal processing formulas.
+Compilers for DSLs typically rely on domain-specific constructs to capture the
+intrinsic parallelism and locality of the application.  Using such an
+approach, DSL compilers such as Halide~\cite{Halide} for image processing show
+impressive results. Its inputs are images defined on an infinite range while
+TC sets a fixed size for each dimension using range inference. This is better
+suited to ML applications, dominated by fixed size tensors with
+higher temporal locality than 2D-images; it is also less verbose in the case of
+reductions and does not carry the syntactic burden of anticipating the declaration of stage
+names and free variables (Halide needs this as a C++ embedded DSL).
+OoLaLa~\cite{OoLaLa} takes a similar approach for linear algebra, and
+TACO~\cite{Taco} and Simit~\cite{Simit} use a similar notation as TC but
+generate sparse matrix code for numerical solvers.
+
+Following this trend in the context of deep neural networks, we not only
+design yet another DSL and compiler but propose a more generic code generation
+and optimization framework bringing together decades of research in loop nest
+optimization and parallelization for high-performance computing. We also
+design the domain language to cover a variety of existing and emerging machine
+learning models.
+Our framework automates a combination of affine transformations involving
+hierarchical tiling, mapping, shifting, fusion, distribution, interchange, on
+either parametric or fully instantiated problems, that are not accessible to
+Halide \cite{Halide,Mullapudi2016HalideAutoscheduler}, Latte \cite{Latte} or
+XLA's \cite{XLA} representations of tensor operations.
+
+% \aanote{Some too-verbose thoughts on the Halide comparison: The algorithm
+% specification is syntactically identical to the Halide specification of the
+% same thing! You could copy-paste it. Reviewers may notice. Bounds, however,
+% are treated in a fundamentally different manner more suited to tensor
+% computations. Just like Halide, bounds are inferred, but Halide treats
+% pipeline stages as functions defined over an infinite integer domain, and
+% infers bounds based on what regions are used (demand-driven bounds
+% inference), stages in one of these pipelines have algorithmically meaningful
+% sizes, and bounds are supply-driven. They're inferred based on the size of
+% the *input*. One concrete advantage of this over Halide is that bounds on
+% reduction dimensions can be inferred. In Halide these must be specified
+% manually using an "RDom". Halide is also cluttered with the need to
+% predeclare the stage names and free variables to make the code legal C++.
+% Not sure how to turn this into paper text. The thing I would emphasize is
+% the syntactic equivalent and the backwards vs forwards difference in bounds
+% inference.}
+% \acnote{I suggest we insert a very language-specific comparison in this
+% paragraph, more discriminating than the above text, and explicitly defer the
+% rest of the comparison to the related work section. Zack, do you see a way
+% to refine the comparison of the language designs that could better highlight
+% the technical advantages of TC? It does not have to be innovative in all
+% dimensions of course, but one key advantage of TC motivating the design of a
+% new language should be found for each related language, as TC is presented
+% as one of the top level contributions. Safety, performance, conciseness,
+% domain-suitedness, etc., anything.}
+
+% \ntvnote{Add references to FLAME}\acnote{Not needed, no GPU target beyond a
+% couple of preliminary research papers and experiments}
+
+The polyhedral framework is a powerful abstraction for the analysis
+and transformation of loop nests, and a number of tools and libraries
+have been developed to realize its benefits
+\cite{feautrier92multi,Bondhugula2008Pluto,PPCG2013,Bondhugula2016Pluto+,Zinenko2018Spatial},
+including production compilers such as GCC (Graphite) and LLVM
+(Polly).  Polyhedral techniques have also been tailored for
+domain-specific purposes. State of the art examples include the
+PolyMage~\cite{Polymage} DSL for image processing pipelines and the
+PENCIL approach to the construction of parallelizing and compilers for
+DSLs~\cite{Baghdadi2015Pencil,VOBLA}. PolyMage is a clear illustration
+of the benefits of operating at a high level of abstraction, closer to
+the mathematics of the domain of interest: while GCC/Graphite and
+LLVM/Polly struggle to recover affine control and flow from low-level
+code, PolyMage natively captures patterns amenable to domain-specific
+optimization, such as stencil-specific overlapped tiling with or
+without recomputation, and cache-conscious fusion and tiling
+heuristics; it also offers a more productive programming experience
+for end users.  Interestingly, some techniques derived from PolyMage
+crossed out of polyhedral representations into Halide's automatic
+scheduler~\cite{Mullapudi2016HalideAutoscheduler}.  Back to deep
+learning frameworks, TVM extends Halide with recurrent (parallel scan)
+operators, support for ML accelerators, and tight integration with ML
+frameworks \cite{TVM}. It also provides autotuning
+capabilities \cite{autotvm} and shares
+several engineering goals of TC, such as transparent ML framework
+integration.  Much like PolyMage, TC implements optimizations well
+suited to the long distance, non-uniform reuse patterns of deep
+learning models; these heuristics are not available in general-purpose
+compilers such as LLVM/Polly, Pluto or PPCG, or semi-automatic frameworks
+such as Halide and TVM.
+
+None of the aforementioned frameworks offer the
+complete transparency of TC's end-to-end compilation flow.
+TVM involves some level of manual intervention and/or feedback-directed
+optimization even for producing the most baseline GPU implementation,
+and it guarantees functional correctness for a
+subset of the scheduling primitives and tensor operations: e.g.,
+convolutions can only be fused at the expense of introducing redundant
+computations, or involving lower level transformations that cannot be
+verified at compilation time. In addition, the balance between
+analytical objective functions (profitability heuristics) and
+feedback-directed autotuning is completely different: Halide and TVM
+auto-schedulers expose all scheduling decisions to the autotuner and
+infer most performance-related information from execution profiles,
+while TC's polyhedral flow reduces the autotuning space to a narrow
+set of optimization options and tile sizes.
+
+% \ntvnote{cite Loopy when metaprogramming or matching gets in}
+
+% \acnote{Removed Delite, cited in the introduction (indirectly) and not directly relevant.}
+
+% Delite \cite{chafi_domain-specific_2011} is a generic
+% framework for building DSL compilers.
+% Delite uses Lightweight Modular Staging (LMS) \cite{lms_staging_10}, a compiler framework designed for embedding DSLs into Scala.
+% Delite relies on information from a DSL to decide whether a loop is
+% parallel but has no facilities for advanced loop nest transformations and automatic acceleration on a GPU.
+
+% \acnote{Discuss stratego/matching/rewrite systems after we converge on the annotation and pattern matching section}
+
+TC also shares several motivations with Latte \cite{Latte} and PlaidML
+\cite{PlaidML}, including a high level domain-specific language and an
+end-to-end flow.  TC provides elementwise access that is just as
+expressive when implementing custom layers, but unlike Latte it is
+more concise thanks to type and shape inference, safer regarding
+static bound checking and graph connectivity, and more flexible by
+decoupling indexing from representation and layout choices.
+In addition, our framework implements more complex
+scheduling and mapping transformations than both Latte and PlaidML,
+some of which are essential to GPU targets with partitioned memory
+architectures. Unlike Latte, it is also designed as a JIT compilation
+library for seamless integration with deep learning frameworks. Unlike
+PlaidML, it is not limited to high level patterns and rewrite rules,
+but captures complex affine transformations resulting from analytical
+modeling and autotuning. As a consequence, the TC compilation process
+takes generally more time than PlaidML, a price to pay for the ability
+to implement a wider range of optimizations.
+
+Like TC, XLA \cite{XLA} provides automatic shape and size inference,
+it may operate ``in process'' as a JIT compilation library, and it
+integrates into a production deep learning framework (TensorFlow,
+Caffe2~\cite{Caffe2}). XLA shares many motivations with Latte, with a
+focus on integration and completeness of functionality rather than on
+the complexity of the optimizations and mapping strategies.  Glow
+\cite{Glow} is a recent domain-specific, retargetable compiler for
+PyTorch/Caffe2. It shares many of the motivations and capabilities of
+XLA, while emphasizing retargetability (CPUs as well GPUs and ML
+accelerators from multiple vendors) and the ability to differentiate,
+optimize, lower operations and sub-graphs of operations within its own
+hierarchy of intermediate representations. It can leverage blackbox
+numerical libraries as well as generate custom vector processing
+kernels relying on LLVM. Our compiler design and algorithmic
+contributions would naturally fit XLA, Latte or Glow, except for the
+following: \ourtoolkitname remains independent from a specific
+computation graph while preserving tight integration with production
+frameworks; we did not use an embedded DSL approach---keeping C++ as
+an interface for implementing optimization strategies only---isolating
+the user from complexity and debugging hurdles of embedded DSLs, and
+we leverage polyhedral techniques to factor-out most of the
+optimization heavy-lifting, while XLA, Latte and Glow resort to
+operation-specific emitters/lowering, optimization schemas and heuristics.
+% ; we raised the level of abstraction of tensor comprehensions to expose to
+% the user the ability to control the substitution of low level operations
+% with optimized libraries (a feature XLA provides only as a black box); and
+% we rely on a powerful polyhedral compilation framework supporting more
+% advanced scheduling and mapping strategies.
+
+Recently, \rstreamtf \cite{RStreamTF} was presented as a
+proof-of-concept adaptation of the R-Stream polyhedral compiler to the
+automatic optimization of TensorFlow operators. Similarly to our
+approach, the generated code is wrapped as a custom operator of
+TensorFlow. The tool takes a computation graph as input and partitions
+it into sub-graphs amenable to tensor fusion, contraction and layout
+optimization. \rstreamtf also leverages the broadcast semantics of
+TensorFlow to maximize the operator's polymorphism w.r.t.\ input
+tensor dimension and shapes. This makes \rstreamtf very aggressive in
+terms of static memory management and kernel partitioning. We made the
+more pragmatic choice of leaving most of these decisions to the level of
+tensor algebra, allowing a domain-specific optimizer or ML expert to
+rewrite declarative comprehensions into capacity- and layout-optimized
+ones. On the other hand, \ourtoolkitname is more ambitious in its
+domain-specialization of affine scheduling and mapping, aiming for the
+generation of a single accelerated kernel, with heuristics adapted to
+the high dimensional, non-uniform, long distance reuse patterns of neural
+networks. The lack of algorithmic detail in the \rstreamtf paper
+prevents us from
+comparing those affine transformation heuristics.

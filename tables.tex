@@ -1,0 +1,90 @@
+% 1LUT TC     Caffe2
+\renewcommand{\arraystretch}{.5}
+\begin{tabular}{llrrrrrr}
+\toprule
+	      &  &  & {\textbf{Pascal}} &  &  & {\textbf{Volta}} & \\
+\textbf{1LUT} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$B = 128, D = 64, E1 = 10^7, L1 = 50$}
+  & TC     & 13 & 14 & 14 & 15 & 16 & 17\\
+  & Caffe2 & 85 & 91 & 95 & 56 & 58 & 63\\
+
+% 2LUT TC     Caffe2
+\toprule
+\textbf{2LUT} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{
+$B = 128, D = 64, E1, E2 = 10^7, L1, L2 = 50$}
+  & TC     & 52 & 54 & 57 & 35 & 35 & 37\\
+  & Caffe2 & 132 & 136 & 144 & 115 & 117 & 124\\
+
+% MLP1 TC     Caffe2
+\toprule
+\textbf{MLP1} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$B = 128, M = 2000, N = 128$}
+  & TC     & 68 & 69 & 71 & 57 & 58 & 59\\
+  & Caffe2 & 87 & 89 & 91 & 116 & 118 & 123\\
+
+% MLP3 TC     Caffe2
+\toprule
+\textbf{MLP3} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$B = 128, N = 128, O = 64, P = 32, Q = 2$}
+  & TC     & 18 & 19 & 19 & 20 & 20 & 21\\
+  & Caffe2 & 157 & 159 & 169 & 144 & 146 & 164\\
+
+% BatchMatMul TC     Caffe2
+\toprule
+\textbf{tbmm} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$B = 500, K = 26, M = 72, N = 26$}
+  & TC     & 52 & 53 & 54 & 42 & 43 & 43\\
+  & Caffe2 & 94 & 102 & 103 & 76 & 77 & 78\\
+
+% GroupConvolution TC     Caffe2
+\toprule
+\textbf{Group Convolution} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+$C, F = 4, G, N = 32, H = 56, \textit{KH}, \textit{KW} = 3,$ & TC      & 696 & 701 & 704 & 435 & 440 & 443\\
+$W = 56$                                                     & Caffe2  & 1590 & 1609 & 1621 & 879 & 888 & 896\\
+\midrule
+$C, F = 8, G, N = 32, H = 28, \textit{KH}, \textit{KW} = 3,$ & TC      & 574 & 576 & 578 & 269 & 270 & 272\\
+$W = 28$                                                     & Caffe2  & 640 & 653 & 692 & 613 & 650 & 660\\
+\midrule
+$C, F = 16, G, N = 32, H = 14, \textit{KH}, \textit{KW} = 3,$ & TC     & 265 & 272 & 276 & 274 & 284 & 287\\
+$W = 14$                                                      & Caffe2 & 440 & 474 & 510 & 377 & 383 & 397\\
+\midrule
+$C, F = 32, G, N = 32, H = 7, \textit{KH}, \textit{KW} = 3,$ & TC       & 463 & 481 & 491 & 259 & 260 & 264\\
+$W = 7$                                                      & Caffe2   & 456 & 461 & 469 & 367 & 388 & 394\\
+
+% GroupNormalization TC     Caffe2
+\toprule
+\textbf{Group Normalization} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$C = 512, G = 32, H = 12, N = 4, W = 12$}
+  & TC      & 22 & 23 & 24 & 32 & 33 & 35\\
+  & Caffe2  & 37 & 38 & 40 & 33 & 34 & 35\\
+\midrule
+\multirow{2}{*}{$C = 512, G = 32, H = 48, N = 32, W = 48$}
+  & TC     & 1285 & 1290 & 1294 & 593 & 597 & 601\\
+  & Caffe2 & 1814 & 1819 & 1823 & 865 & 869 & 871\\
+
+% TransposedMatMul TC     Caffe2
+\toprule
+\textbf{tmm} &  & p0 & p50 & p90 & p0 & p50 & p90\\
+\midrule
+\multirow{2}{*}{$K = 32, M = 128, N = 256$}
+  & TC     & 15 & 15 & 15 & 15 & 16 & 17\\
+  & Caffe2 & 18 & 19 & 20 & 31 & 31 & 32\\
+\midrule
+\multirow{2}{*}{$K = 1024, M = 128, N = 1024$}
+  & TC     & 318 & 334 & 344 & 181 & 189 & 192\\
+  & Caffe2 & 55 & 58 & 64 & 89 & 90 & 91\\
+\midrule
+\multirow{2}{*}{$K = 4096, M = 128, N = 16384$}
+  & TC     & 17168 & 17209 & 17270 & 7937 & 8004 & 8096\\
+  & Caffe2 & 2254 & 2388 & 2590 & 1360 & 1378 & 1419\\
+\bottomrule
+\end{tabular}
+

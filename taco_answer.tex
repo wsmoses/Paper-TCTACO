@@ -1,0 +1,262 @@
+\documentclass[letterpaper,11pt]{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{textcomp}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\newcommand{\rev}[1]{~\\[0.5cm]{\tiny $\gg$} {\it #1}}
+\newcommand{\cont}{\textlangle{}\dots\textrangle{}}
+\newcommand{\todo}{{\color{red} \bf TODO}}
+
+\begin{document}
+
+% -----
+
+First of all, we would like to thank the expert reviewers and associate editor for the detailed feedback and recommendations.
+
+\section*{Description of Changes}
+
+Following the recommendation from R4, we reworked Section~3 to present the
+entire flow more consistently and discuss each individual component separately.
+We attempted to keep the balance between general approach description and
+illustrative examples highlighted by R1.
+
+As suggested by R2, we now have a new Section~4 to describe how TC
+is positioned in the ML compilation flow and how TC transformations
+compare to those performed by XLA and Glow.
+
+We added a justification for our evaluation comparing against Caffe2
+performance on GPUs, requested by several Referees.  Thanks to its
+mathematical notation, TC provides a way to rapidly express new,
+unconventional layers that would require a much larger implementation
+effort in other frameworks such as TVM. Given the major differences in
+the level of automation provided in TC vs.\ TVM, we believe a detailed
+comparison with TVM-generated code would not bring much additional
+insight about our contributions, and about the strengths and
+weaknesses of TC: highly optimized (manual) TVM schedules may easily
+outperform TC, just like cuDNN does, while naive or automatically
+generated ones may not give TVM proper credit.
+
+We discussed the related work suggested by the reviewers, addressing
+individual comments by providing more detail or clarifying the
+phrasing. Generally, we significantly expanded the related work
+section.
+
+\section*{Individual Comments}
+
+\rev{Improve linking between sections}
+
+In addition to the above-mentioned transformations of Section~3, we
+added more explicit transitions, with more logically organized
+rationale. Thank you for raising this issue.
+
+\rev{Will TC and its associated compiler be open-sourced at some point (on publication)?}
+
+TC is open source:
+\url{https://github.com/facebookresearch/tensorcomprehensions}
+
+\rev{EBNF issues}
+
+We updated the EBNF to consistently use parentheses for inline alternatives,
+brackets for optional clauses and angle brackets for simplified textual
+descriptions (e.g., "C identifier" for identifiers).  The description of the
+EBNF notation was also added to the caption.
+
+\rev{Can you give an example of the safe approximations that you used when accesses
+\cont ?}
+
+We clarified the text to state that we are making the same over-approximation
+as [Benabderrahmane 2010]: if a subscript is non-affine, we assume all values along the given dimension are accessed.
+
+\rev{It would help, when describing the example in Figure~4, to refer back to the original sgemm code}
+
+We added a page reference and minor rewording to avoid ambiguity with other matrix multiplication variants.
+
+\rev{\cont indirectly accessed arrays are copied to new arrays that are accessed
+directly, and it's these new arrays that are promoted to shared or private
+memory \cont}
+
+The transformation can indeed be interpreted this way.  All array promotions
+require a copy from global memory to shared or private memory.  This copy is
+only generated when the array promotion has been decided.  In other words,
+indirectly accessed arrays are not copied unless the copy is placed in shared or
+private memory.  We updated the wording to better explain this.
+
+\rev{Why use a genetic search when autotuning \cont ?}
+
+Previous work demonstrates that genetic algorithms are well applicable
+to polyhedral program representations [Pouchet et al.\ 2008, 2011].
+We updated the autotuner description accordingly.  Other approaches
+may be appropriate, e.g., to refine/prune the search space; this is
+outside the core contributions of TC and we cited one of the
+pioneering works for the interested reader.
+
+\rev{Duration of autotuning with respect to the duration of individual
+execution.}
+
+TC is designed for individual kernels or ML operators (e.g.,
+convolutions), potentially fusing several operators together.  In
+training, a significant amount of time is spent on computing the same
+kernel repeatedly over different data during the (stochastic) gradient
+descent.  In inference scenarios, the network is optimized ahead of
+time/deployment. As a result, although TC operates as a JIT compiler,
+it only marginally hits the typical compilation/run-time trade-offs of
+JIT compilers. Autotuning time may become an issue in specific
+training scenarios where hyper-parameters would need to be frequently
+updated, but in such a case we could leverage TC's intrinsic handling
+of dynamic shapes and generate a single version of each operator or
+fused operators to handle all hyper-parameter configurations.
+
+We added the discussion on the position of TC in the ML framework in a
+new, dedicated Section~4.
+
+\rev{Is autotuning the main contribution to performance?  \cont Is part of your
+contribution the DSL that enables easy autotuning in a later compilation phase?}
+
+As pointed out in the review, a part of our contribution is indeed the
+framework that exposes the optimization parameters to the autotuning
+framework.  Given how diverse the source models and the target
+architectures are, building a general purpose one-size-fits-all
+optimization heuristic is challenging [Zinenko et al.\ 2018, Kong and
+  Pouchet 2018].  We chose not to attempt creating such a heuristic,
+but break down the overall optimization problem into a higher-level
+search over a small set of strategies and parameters, driving a
+lower-level linear optimization heuristic.  Future work may consider
+automatically deriving a heuristic using machine learning techniques,
+similarly to TVM [Chen 2017].
+
+\rev{What sized inputs did you provide to the benchmarks in figure 6?}
+
+We used sizes relevant for a specific ML operator.  The are provided in the
+first column of Table~1.  We added a cross-reference to the caption of Figure~6.
+
+% -----
+
+\rev{\cont compare to the code generated by other ML compilation frameworks \cont}
+\vspace{-0.5cm}
+\rev{\cont why comparison to TVM is infeasible}
+
+We chose to compare against Caffe2 because of TC positioning and TC language
+expressiveness. ML (sub)graph compilers like XLA or Glow operate on a fixed
+predefined set of kernels, which is a subset of the layers available in the ML
+frameworks.  While Halide and TVM approaches support custom kernels, they have
+different expressiveness limitations than TC (absence of range inference,
+indirect accesses, parallelism discovery in custom kernels) and build a
+different optimization space.  The only layers that could be compared across
+tools are fully connected (matrix multiplication) and simple convolutions, that
+are so common that they all the flows support them.  The goal of TC is
+precisely to rapidly provide reasonable performance for new, unconventional
+layers with minimal optimization-specific input (such as declaring parallel and
+reduction axes in Halide-style approaches).
+
+We updated the discussion in Sections~3, 6 and~7 to reflect this
+rationale, and justifying the absence of a quantitative comparison
+with TVM.
+
+\rev{Discuss how TC can be used for kernel fusions and XLA-like sub-graph
+compilation.}
+
+Unlike XLA, TC defines an operates upon a mathematical notation of the
+computation.  Operator/layer fusion in TC is essentially a textual
+merge of multiple functions into a single one.  At the same time, TC
+operates at a level below an ML framework graph and assumes the
+decision to combine nodes have been taken by the framework.  It
+guarantees a single kernel will be produced given the merged input,
+but this kernel may be sequential if data dependencies preclude
+parallelization.
+
+The TC notation is lowered to affine loops that can be fused using polyhedral
+techniques.  Contrary to XLA and Halide/TVM approaches, polyhedral loop fusion
+does not necessarily require recomputing the data to satisfy dependencies, but
+may compose loop fusion with other transformations (interchange, shifting) to
+satisfy the dependencies.
+
+We added this discussion in the newly introduced Section~4 on integration with
+ML frameworks.
+
+% -----
+
+\rev{Discuss Glow.}
+
+We added a discussion of Glow into the Related Work section.  The main
+difference between Glow and TC is that TC allows its user to define new kernels
+using the array notation whereas Glow (similarly to XLA) provides a set of
+instructions that can only be extended by writing C++.
+
+\rev{Other targets, e.g.\ CPUs}
+
+We chose to perform the evaluation on the GPUs since they are the most
+common hardware used for training ML models, and because they are also
+more challenging to program manually.
+
+Of course, the polyhedral code generation techniques can be adapted to
+emit sequential or parallel CPU code.
+
+\rev{Support for data types other than float}
+
+TC supports 32 and 64-bit floats, and 8, 16, 32 and 64-bit integers
+transparently for the user, although the main evaluation focused on 32-bit
+floats as the most common use case at the time of writing.  We clarified that
+other types are supported in Section~2.
+
+% -----
+
+\rev{\cont conv2d example could be explained in more detail \cont}
+
+We added a more detailed explanation of the 2-D convolution and used it as an
+additional example for the shape inference procedure in the relevant
+subsections.
+
+\rev{Section 3 could better explain what all the pieces are \cont}
+
+The original intention of Section~3 was to provide an overview of the
+entire compilation flow, followed by an overview of the polyhedral
+compilation process before detailed specific steps.  This was arguably
+a sub-optimal decision that harmed the understanding of the overall
+flow. We dramatically reorganized this part of the paper in the following way:
+\begin{itemize}
+\item We reworked the section to cover the end to end compilation
+  flow, including shape inference, affine scheduling, device mapping
+  and autotuning, systematically illustrated with examples.
+\item We made the discussion more self-contained and accessible to
+  readers familiar with polyhedral compilation but not necessarily
+  with the vocabulary and semantics of schedule trees.
+\item We extended the section with more
+  details about the tiling and mapping strategies.
+\item We described the the automatic recognition of blackbox library
+  implementations and its application to the acceleration of
+  reductions.
+\end{itemize}
+
+% -----
+
+\rev{Extend the discussion of the matmul slowdowns.}
+
+The paragraph in the TMM discussion of Section~6 was indeed slightly
+confusing. We reworded the two main reasons for the large slowdowns
+compared to cuBLAS. We also extended the discussion, citing CUTLASS
+for a deeper analysis of the missed optimizations and Diesel for the
+demonstration that polyhedral techniques can be leveraged to hit or
+outperform cuBLAS. Both involve much more operator-specific effort and
+target-specific information, while TC aims at covering a wider area of
+layers.
+
+\rev{Add a table/discussion the relative time spent in each of the kernels in a
+larger network.}
+
+We added at the beginning of the performance evaluation a reference to
+AlexNet, ResNet and ResNext studies of the performance breakdown of
+individual convolutions and fully connected layers on GPUs, and a
+statement justifying the selection of these 9 TC functions for
+performance evaluation.
+
+\rev{KRU hand-coded factorized codes.}
+
+Unfortunately, the CUDA implementation of KRU is not publicly
+accessible.  We implemented a simple sequential C version to check for
+functional correctness, but it is unsuitable for performance
+comparisons. We are considering investigating the algorithmic and
+target-specific optimization KRU as a problem on its own in the
+future.
+
+\end{document}
